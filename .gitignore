@@ -168,3 +168,5 @@ openai.key
 # credentials
 credentials.json
 
+# ideas
+ideas.txt
