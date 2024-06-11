@@ -264,10 +264,21 @@ class TaskListWindow(QMainWindow):
                 == current_date
             ]
         elif self.next_days_radio_button.isChecked():
-            # Add your logic here
-            pass
+            filtered_tasks = [
+                task
+                for task in all_tasks
+                if "due" in task
+                and datetime.strptime(task["due"], "%Y-%m-%dT%H:%M:%S.%fZ").date()
+                > current_date
+            ]
         elif self.overdue_radio_button.isChecked():
-            # Add your logic here
+            filtered_tasks = [
+                task
+                for task in all_tasks
+                if "due" in task
+                and datetime.strptime(task["due"], "%Y-%m-%dT%H:%M:%S.%fZ").date()
+                < current_date
+            ]
             pass
         elif (
             not self.today_radio_button.isChecked()
