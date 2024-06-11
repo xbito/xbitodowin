@@ -26,7 +26,8 @@ from googleapiclient.discovery import build
 
 import os
 import webbrowser
-
+from datetime import datetime, timedelta
+import pytz
 
 SCOPES = [
     "https://www.googleapis.com/auth/tasks.readonly",
@@ -111,6 +112,11 @@ class TaskListWindow(QMainWindow):
         self.next_days_radio_button = QRadioButton("Next Days")
         self.overdue_radio_button = QRadioButton("Overdue")
 
+        # Connect the toggled signal to the filter_tasks method
+        self.today_radio_button.toggled.connect(self.filter_tasks)
+        self.next_days_radio_button.toggled.connect(self.filter_tasks)
+        self.overdue_radio_button.toggled.connect(self.filter_tasks)
+
         # Create a button group for the radio buttons
         self.radio_button_group = QButtonGroup()
         self.radio_button_group.addButton(self.today_radio_button)
@@ -143,7 +149,7 @@ class TaskListWindow(QMainWindow):
         # Create a search bar
         self.search_bar = QLineEdit()
         self.search_bar.setPlaceholderText("Search tasks...")
-        self.search_bar.textChanged.connect(self.filter_tasks)
+        self.search_bar.textChanged.connect(self.search_tasks)
         main_layout.addWidget(self.search_bar)
 
         self.task_table = QTableWidget()
@@ -221,7 +227,7 @@ class TaskListWindow(QMainWindow):
         self.overdue_radio_button.setChecked(False)
         self.radio_button_group.setExclusive(True)
 
-    def filter_tasks(self, text):
+    def search_tasks(self, text):
         """
         Filters the tasks based on the entered criteria.
         Args:
@@ -237,6 +243,42 @@ class TaskListWindow(QMainWindow):
             else:
                 self.task_table.showRow(row)
 
+    def filter_tasks(self):
+        """
+        Filters the tasks based on the selected filter.
+        """
+        # Fetch all tasks
+        all_tasks = self.fetch_all_tasks()
+
+        # Get the current date in the user's timezone
+        user_tz = pytz.timezone("America/New_York")  # Replace with your timezone
+        current_date = datetime.now(user_tz).date()
+
+        # Filter tasks based on the selected filter
+        if self.today_radio_button.isChecked():
+            filtered_tasks = [
+                task
+                for task in all_tasks
+                if "due" in task
+                and datetime.strptime(task["due"], "%Y-%m-%dT%H:%M:%S.%fZ").date()
+                == current_date
+            ]
+        elif self.next_days_radio_button.isChecked():
+            # Add your logic here
+            pass
+        elif self.overdue_radio_button.isChecked():
+            # Add your logic here
+            pass
+        elif (
+            not self.today_radio_button.isChecked()
+            and not self.next_days_radio_button.isChecked()
+            and not self.overdue_radio_button.isChecked()
+        ):
+            # If no radio button is checked, do nothing
+            return
+
+        self.task_list_sidebar.render_tasks(filtered_tasks)
+
     def refresh_tasks(self, current_item, previous_item):
         """
         Refreshes the tasks associated with the currently selected task list.
@@ -250,7 +292,7 @@ class TaskListWindow(QMainWindow):
 
         # Refresh the tasks associated with this task list
         # (Assuming you have a method to do this)
-        self.task_list_sidebar.load_tasks(task_list_id)
+        self.task_list_sidebar.load_tasks_by_task_list(task_list_id)
 
     def create_menu(self):
         self.menu_bar = self.menuBar()
@@ -391,6 +433,20 @@ class TaskListWindow(QMainWindow):
         except Exception as e:
             print("Failed to fetch tasks:", e)
             return []
+
+    def fetch_all_tasks(self):
+        """Fetch all tasks from all task lists."""
+        all_tasks = []
+        task_lists = self.service.tasklists().list().execute().get("items", [])
+        for task_list in task_lists:
+            tasks = (
+                self.service.tasks()
+                .list(tasklist=task_list["id"])
+                .execute()
+                .get("items", [])
+            )
+            all_tasks.extend(tasks)
+        return all_tasks
 
     def start(self):
         self.load_task_lists()
