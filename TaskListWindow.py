@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
     QWidget,
     QGroupBox,
     QRadioButton,
+    QButtonGroup,
 )
 from google.auth.exceptions import RefreshError
 from google.auth.transport.requests import Request
@@ -110,6 +111,18 @@ class TaskListWindow(QMainWindow):
         self.next_days_radio_button = QRadioButton("Next Days")
         self.overdue_radio_button = QRadioButton("Overdue")
 
+        # Create a button group for the radio buttons
+        self.radio_button_group = QButtonGroup()
+        self.radio_button_group.addButton(self.today_radio_button)
+        self.radio_button_group.addButton(self.next_days_radio_button)
+        self.radio_button_group.addButton(self.overdue_radio_button)
+
+        # Connect the buttonClicked signal to the deselect_task_list method
+        self.radio_button_group.buttonClicked.connect(self.deselect_task_list)
+
+        # Connect the currentItemChanged signal to the uncheck_radio_buttons method
+        self.task_list_sidebar.currentItemChanged.connect(self.uncheck_radio_buttons)
+
         # Add radio buttons to the filter layout
         self.filter_layout.addWidget(self.today_radio_button)
         self.filter_layout.addWidget(self.next_days_radio_button)
@@ -186,15 +199,6 @@ class TaskListWindow(QMainWindow):
         self.task_table.setColumnWidth(2, due_date_width)
         self.task_table.setColumnWidth(3, notes_width)
 
-        # # Calculate the width for the other columns
-        # other_columns_width = int(
-        #     (main_content_width - title_column_width) / (column_count - 1)
-        # )
-
-        # # Set the width for the other columns
-        # for i in range(1, column_count):
-        #     self.task_table.setColumnWidth(i, other_columns_width)
-
         # Adjust the width of the sidebar and main content area
         sidebar_width = 200  # Set the desired width for the sidebar
         main_content_width = event.size().width() - sidebar_width
@@ -202,9 +206,20 @@ class TaskListWindow(QMainWindow):
         # Set the maximum width of the filter group box to the width of the task list sidebar
         self.filter_group_box.setMaximumWidth(self.task_list_sidebar.width())
         self.sidebar_widget.setMaximumWidth(self.task_list_sidebar.width() + 10)
-        # self.central_widget.layout().itemAt(1).widget().setMaximumWidth(main_content_width)
 
         super(self.__class__, self).resizeEvent(event)
+
+    def deselect_task_list(self):
+        # Deselect any selected item in the task list sidebar
+        self.task_list_sidebar.clearSelection()
+
+    def uncheck_radio_buttons(self):
+        # Uncheck any checked radio button
+        self.radio_button_group.setExclusive(False)
+        self.today_radio_button.setChecked(False)
+        self.next_days_radio_button.setChecked(False)
+        self.overdue_radio_button.setChecked(False)
+        self.radio_button_group.setExclusive(True)
 
     def filter_tasks(self, text):
         """
