@@ -14,6 +14,8 @@ from PySide6.QtWidgets import (
     QTextBrowser,
     QVBoxLayout,
     QWidget,
+    QGroupBox,
+    QRadioButton,
 )
 from google.auth.exceptions import RefreshError
 from google.auth.transport.requests import Request
@@ -96,8 +98,34 @@ class TaskListWindow(QMainWindow):
         # Create a sidebar for task lists
         self.task_list_sidebar = TaskListSidebar(window=self)
 
+        # Create a group box for filter options
+        self.filter_group_box = QGroupBox("Filter tasks")
+        self.filter_layout = QVBoxLayout()
+
         # Create a main layout for the content
         main_layout = QVBoxLayout()
+
+        # Create radio buttons for filter options
+        self.today_radio_button = QRadioButton("Today")
+        self.next_days_radio_button = QRadioButton("Next Days")
+        self.overdue_radio_button = QRadioButton("Overdue")
+
+        # Add radio buttons to the filter layout
+        self.filter_layout.addWidget(self.today_radio_button)
+        self.filter_layout.addWidget(self.next_days_radio_button)
+        self.filter_layout.addWidget(self.overdue_radio_button)
+
+        # Set the filter layout to the group box
+        self.filter_group_box.setLayout(self.filter_layout)
+
+        # Create a vertical layout for the sidebar and filter group box
+        sidebar_layout = QVBoxLayout()
+        sidebar_layout.addWidget(self.filter_group_box)
+        sidebar_layout.addWidget(self.task_list_sidebar)
+
+        # Create a widget for the sidebar and set the layout
+        self.sidebar_widget = QWidget()
+        self.sidebar_widget.setLayout(sidebar_layout)
 
         # Create a search bar
         self.search_bar = QLineEdit()
@@ -116,7 +144,7 @@ class TaskListWindow(QMainWindow):
 
         # Create a horizontal layout for the sidebar and main content
         horizontal_layout = QHBoxLayout()
-        horizontal_layout.addWidget(self.task_list_sidebar)
+        horizontal_layout.addWidget(self.sidebar_widget)
         horizontal_layout.addLayout(main_layout)
 
         # Create a central widget and set the main layout
@@ -171,6 +199,9 @@ class TaskListWindow(QMainWindow):
         sidebar_width = 200  # Set the desired width for the sidebar
         main_content_width = event.size().width() - sidebar_width
         self.task_list_sidebar.setFixedWidth(sidebar_width)
+        # Set the maximum width of the filter group box to the width of the task list sidebar
+        self.filter_group_box.setMaximumWidth(self.task_list_sidebar.width())
+        self.sidebar_widget.setMaximumWidth(self.task_list_sidebar.width() + 10)
         # self.central_widget.layout().itemAt(1).widget().setMaximumWidth(main_content_width)
 
         super(self.__class__, self).resizeEvent(event)
