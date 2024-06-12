@@ -32,6 +32,9 @@ import pytz
 SCOPES = [
     "https://www.googleapis.com/auth/tasks.readonly",
     "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/userinfo.email",
+    "https://www.googleapis.com/auth/userinfo.profile",
+    "openid",
 ]
 
 
@@ -64,9 +67,15 @@ class TaskListWindow(QMainWindow):
         self.service = build("tasks", "v1", credentials=self.creds)
         # Load Google Sheets API
         self.sheets_service = build("sheets", "v4", credentials=self.creds)
+        # Load User Profile API
+        self.profile_service = build("oauth2", "v2", credentials=self.creds)
         super().__init__()
         self.about_popup = None
         self.initUI()
+
+    def get_user_info(self):
+        user_info = self.profile_service.userinfo().get().execute()
+        return user_info
 
     def refresh_token(self):
         # Check if the token has expired
@@ -106,6 +115,10 @@ class TaskListWindow(QMainWindow):
 
         # Create a main layout for the content
         main_layout = QVBoxLayout()
+
+        # Fetch user info, email
+        self.user_email_label = QLabel(self.get_user_info()["email"])
+        main_layout.addWidget(self.user_email_label)
 
         # Create radio buttons for filter options
         self.today_radio_button = QRadioButton("Today")
