@@ -76,9 +76,7 @@ class TaskListSidebar(QListWidget):
                 self.window.task_table.setItem(
                     row_position,
                     2,
-                    QTableWidgetItem(
-                        "Completed on " + completion_date.strftime("%Y-%m-%d %H:%M:%S")
-                    ),
+                    QTableWidgetItem(completion_date.strftime("%Y-%m-%d %H:%M:%S")),
                 )
             # Store the task's notes
             task_notes = task.get("notes")
