@@ -124,17 +124,20 @@ class TaskListWindow(QMainWindow):
         self.today_radio_button = QRadioButton("Today")
         self.next_days_radio_button = QRadioButton("Next Days")
         self.overdue_radio_button = QRadioButton("Overdue")
+        self.recently_completed_radio_button = QRadioButton("Recently completed")
 
         # Connect the toggled signal to the filter_tasks method
         self.today_radio_button.toggled.connect(self.filter_tasks)
         self.next_days_radio_button.toggled.connect(self.filter_tasks)
         self.overdue_radio_button.toggled.connect(self.filter_tasks)
+        self.recently_completed_radio_button.toggled.connect(self.filter_tasks)
 
         # Create a button group for the radio buttons
         self.radio_button_group = QButtonGroup()
         self.radio_button_group.addButton(self.today_radio_button)
         self.radio_button_group.addButton(self.next_days_radio_button)
         self.radio_button_group.addButton(self.overdue_radio_button)
+        self.radio_button_group.addButton(self.recently_completed_radio_button)
 
         # Connect the buttonClicked signal to the deselect_task_list method
         self.radio_button_group.buttonClicked.connect(self.deselect_task_list)
@@ -146,6 +149,7 @@ class TaskListWindow(QMainWindow):
         self.filter_layout.addWidget(self.today_radio_button)
         self.filter_layout.addWidget(self.next_days_radio_button)
         self.filter_layout.addWidget(self.overdue_radio_button)
+        self.filter_layout.addWidget(self.recently_completed_radio_button)
 
         # Set the filter layout to the group box
         self.filter_group_box.setLayout(self.filter_layout)
@@ -260,13 +264,28 @@ class TaskListWindow(QMainWindow):
         """
         Filters the tasks based on the selected filter.
         """
-        # Fetch all tasks
-        all_tasks = self.fetch_all_tasks()
-
         # Get the current date in the user's timezone
         user_tz = pytz.timezone("America/New_York")  # Replace with your timezone
         current_date = datetime.now(user_tz).date()
 
+        # Filter tasks based on the selected filter
+        # Do it separately because we are changing the headers
+        if self.recently_completed_radio_button.isChecked():
+            all_tasks = self.fetch_all_tasks(completed=True)
+            filtered_tasks = [
+                task for task in all_tasks if task["status"] == "completed"
+            ]
+            print(f"Filtered {len(filtered_tasks)} completed tasks")
+            # Update table headers for completed tasks
+            self.task_table.setHorizontalHeaderLabels(
+                ["Title", "Updated", "Completed", "Notes", "Priority"]
+            )
+        else:
+            all_tasks = self.fetch_all_tasks()
+            # Reset table headers for other filters
+            self.task_table.setHorizontalHeaderLabels(
+                ["Title", "Updated", "Due Date", "Notes", "Priority"]
+            )
         # Filter tasks based on the selected filter
         if self.today_radio_button.isChecked():
             filtered_tasks = [
@@ -297,6 +316,7 @@ class TaskListWindow(QMainWindow):
             not self.today_radio_button.isChecked()
             and not self.next_days_radio_button.isChecked()
             and not self.overdue_radio_button.isChecked()
+            and not self.recently_completed_radio_button.isChecked()
         ):
             # If no radio button is checked, do nothing
             return
@@ -458,18 +478,34 @@ class TaskListWindow(QMainWindow):
             print("Failed to fetch tasks:", e)
             return []
 
-    def fetch_all_tasks(self):
+    def fetch_all_tasks(self, completed=False):
         """Fetch all tasks from all task lists."""
         all_tasks = []
         task_lists = self.service.tasklists().list().execute().get("items", [])
         for task_list in task_lists:
-            tasks = (
-                self.service.tasks()
-                .list(tasklist=task_list["id"])
-                .execute()
-                .get("items", [])
-            )
+            if completed:
+                one_week_ago = datetime.now() - timedelta(days=7)
+                one_week_ago_rfc3339 = one_week_ago.isoformat() + "Z"
+                tasks = (
+                    self.service.tasks()
+                    .list(
+                        tasklist=task_list["id"],
+                        showHidden=True,
+                        completedMin=one_week_ago_rfc3339,
+                    )
+                    .execute()
+                    .get("items", [])
+                )
+            else:
+                tasks = (
+                    self.service.tasks()
+                    .list(tasklist=task_list["id"])
+                    .execute()
+                    .get("items", [])
+                )
+            print(f"Fetched {len(tasks)} tasks for task list {task_list['title']}")
             all_tasks.extend(tasks)
+        print(f"Total tasks fetched: {len(all_tasks)}")
         return all_tasks
 
     def start(self):

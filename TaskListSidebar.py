@@ -70,6 +70,16 @@ class TaskListSidebar(QListWidget):
                 )
             else:
                 self.window.task_table.setItem(row_position, 2, QTableWidgetItem(""))
+            # If we are displaying completed tasks, show the completion date instead of due.
+            if "status" in task and task["status"] == "completed":
+                completion_date = datetime.datetime.fromisoformat(task["completed"])
+                self.window.task_table.setItem(
+                    row_position,
+                    2,
+                    QTableWidgetItem(
+                        "Completed on " + completion_date.strftime("%Y-%m-%d %H:%M:%S")
+                    ),
+                )
             # Store the task's notes
             task_notes = task.get("notes")
             # Add a button to view more notes
