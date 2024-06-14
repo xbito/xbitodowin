@@ -1,5 +1,6 @@
 from TaskListSidebar import TaskListSidebar
 from exports import export_tasks_to_csv, export_tasks_to_excel, export_tasks_to_gsheet
+from motivation import get_motivational_phrase
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QGuiApplication, QIcon
@@ -187,7 +188,21 @@ class TaskListWindow(QMainWindow):
         # Set the horizontal layout as the central widget
         self.central_widget = QWidget()
         self.central_widget.setLayout(horizontal_layout)
-        self.setCentralWidget(self.central_widget)
+
+        # Create a new QVBoxLayout
+        vertical_layout = QVBoxLayout()
+
+        # Create the motivational_phrase_label and add it to the vertical layout
+        self.show_motivational_phrase()
+        vertical_layout.addWidget(self.motivational_phrase_label)
+
+        # Add the central_widget to the vertical layout
+        vertical_layout.addWidget(self.central_widget)
+
+        # Create a new central widget and set the vertical layout as its layout
+        new_central_widget = QWidget()
+        new_central_widget.setLayout(vertical_layout)
+        self.setCentralWidget(new_central_widget)
 
         # Create a menu bar
         self.create_menu()
@@ -197,6 +212,16 @@ class TaskListWindow(QMainWindow):
 
         # Connect the currentItemChanged signal to the refresh_tasks method
         self.task_list_sidebar.currentItemChanged.connect(self.refresh_tasks)
+
+    def show_motivational_phrase(self):
+        phrase = get_motivational_phrase()
+        # Display the Phrase at the top of the UI
+        self.motivational_phrase_label = QLabel(phrase)
+        self.motivational_phrase_label.setAlignment(Qt.AlignCenter)
+        self.motivational_phrase_label.setStyleSheet(
+            "font-size: 16px; font-weight: bold;"
+        )
+        self.central_widget.layout().insertWidget(0, self.motivational_phrase_label)
 
     def resizeEvent(self, event):
         # Get the total number of columns
