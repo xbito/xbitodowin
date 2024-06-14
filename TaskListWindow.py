@@ -483,28 +483,33 @@ class TaskListWindow(QMainWindow):
         all_tasks = []
         task_lists = self.service.tasklists().list().execute().get("items", [])
         for task_list in task_lists:
-            if completed:
-                one_week_ago = datetime.now() - timedelta(days=7)
-                one_week_ago_rfc3339 = one_week_ago.isoformat() + "Z"
-                tasks = (
-                    self.service.tasks()
-                    .list(
-                        tasklist=task_list["id"],
-                        showHidden=True,
-                        completedMin=one_week_ago_rfc3339,
+            page_token = None
+            while True:
+                if completed:
+                    one_week_ago = datetime.now() - timedelta(days=7)
+                    one_week_ago_rfc3339 = one_week_ago.isoformat() + "Z"
+                    response = (
+                        self.service.tasks()
+                        .list(
+                            tasklist=task_list["id"],
+                            showHidden=True,
+                            completedMin=one_week_ago_rfc3339,
+                            pageToken=page_token,
+                        )
+                        .execute()
                     )
-                    .execute()
-                    .get("items", [])
-                )
-            else:
-                tasks = (
-                    self.service.tasks()
-                    .list(tasklist=task_list["id"])
-                    .execute()
-                    .get("items", [])
-                )
-            print(f"Fetched {len(tasks)} tasks for task list {task_list['title']}")
-            all_tasks.extend(tasks)
+                else:
+                    response = (
+                        self.service.tasks()
+                        .list(tasklist=task_list["id"], pageToken=page_token)
+                        .execute()
+                    )
+                tasks = response.get("items", [])
+                print(f"Fetched {len(tasks)} tasks for task list {task_list['title']}")
+                all_tasks.extend(tasks)
+                page_token = response.get("nextPageToken")
+                if not page_token:
+                    break
         print(f"Total tasks fetched: {len(all_tasks)}")
         return all_tasks
 
