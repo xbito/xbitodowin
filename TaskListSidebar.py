@@ -1,5 +1,4 @@
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QListWidget,
@@ -16,11 +15,7 @@ class TaskListSidebar(QListWidget):
         super().__init__(parent)
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.itemClicked.connect(self.load_tasks_by_task_list)
-        self.icon_path = "output.ico.32x32.png"
         self.window = window
-
-    def set_title_icon(self, icon_path):
-        self.icon_path = icon_path
 
     def fetch_tasks_by_task_list(self, item):
         if type(item) is str:
@@ -42,9 +37,6 @@ class TaskListSidebar(QListWidget):
     def render_tasks(self, tasks):
         # Clear the table before loading new tasks
         self.window.task_table.setRowCount(0)
-
-        # Set the icon for the title column
-        self.window.task_table.horizontalHeaderItem(0).setIcon(QIcon(self.icon_path))
 
         # Iterate through the tasks and add them to the table
         for task in tasks:
