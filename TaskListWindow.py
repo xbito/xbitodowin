@@ -352,6 +352,45 @@ class TaskListWindow(QMainWindow):
 
         self.task_list_sidebar.render_tasks(filtered_tasks)
 
+        # Get the selected radio button
+        selected_button = self.radio_button_group.checkedButton()
+
+        if selected_button == self.next_days_radio_button:
+            # Order by due date with the closest day to today first
+            self.order_tasks_by_due_date(ascending=True)
+        elif selected_button == self.overdue_radio_button:
+            # Order by due date, with the oldest day first
+            self.order_tasks_by_due_date(ascending=False)
+        elif selected_button == self.recently_completed_radio_button:
+            # Order by Completed, most recently completed first and going to the past
+            self.order_tasks_by_completed_date(ascending=False)
+
+    def order_tasks_by_due_date(self, ascending):
+        # Implement logic to order tasks by due date
+        # Assuming the due date is in the 3rd column (index 2)
+        # Debug: Print what ordering it is applying:
+        print(
+            "Ordering by due date {0}".format(
+                "ascending" if ascending else "descending"
+            )
+        )
+        self.task_table.sortItems(
+            2, Qt.AscendingOrder if ascending else Qt.DescendingOrder
+        )
+
+    def order_tasks_by_completed_date(self, ascending):
+        # Implement logic to order tasks by completed date, this replaced due date when displaying completed tasks
+        # Assuming the completed date is in the 3rd column (index 2)
+        # Debug: Print what ordering it is applying:
+        print(
+            "Ordering by completed date {0}".format(
+                "ascending" if ascending else "descending"
+            )
+        )
+        self.task_table.sortItems(
+            2, Qt.AscendingOrder if ascending else Qt.DescendingOrder
+        )
+
     def refresh_tasks(self, current_item, previous_item):
         """
         Refreshes the tasks associated with the currently selected task list.
