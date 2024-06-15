@@ -1,6 +1,7 @@
 from TaskListSidebar import TaskListSidebar
 from exports import export_tasks_to_csv, export_tasks_to_excel, export_tasks_to_gsheet
 from motivation import get_motivational_phrase
+from stylesheet import UI_STYLESHEET
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QGuiApplication, QIcon
@@ -212,6 +213,9 @@ class TaskListWindow(QMainWindow):
 
         # Connect the currentItemChanged signal to the refresh_tasks method
         self.task_list_sidebar.currentItemChanged.connect(self.refresh_tasks)
+
+        # Set a flat stylesheet for the window
+        self.setStyleSheet(UI_STYLESHEET)
 
     def show_motivational_phrase(self):
         phrase = get_motivational_phrase()
