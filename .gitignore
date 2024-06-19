@@ -159,14 +159,8 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 .idea/
 
-# token
-token.json
-
-# openai
-openai.key
-
-# credentials
-credentials.json
-
 # ideas
 ideas.txt
+
+# Credentials folder
+credentials/

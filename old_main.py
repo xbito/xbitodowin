@@ -28,7 +28,7 @@ def cosine_similarity(vec1, vec2):
     return dot_product / (norm_a * norm_b)
 
 
-def openai_read_api_key(filepath="openai.key"):
+def openai_read_api_key(filepath="credentials/openai.key"):
     """Read and return the API key from a specified file."""
     try:
         with open(filepath, "r") as file:

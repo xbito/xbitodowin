@@ -44,8 +44,8 @@ class TaskListWindow(QMainWindow):
     def __init__(self, app):
         self.app = app
         # Load Google Tasks API
-        if os.path.exists("token.json"):
-            self.creds = Credentials.from_authorized_user_file("token.json", SCOPES)
+        if os.path.exists("credentials/token.json"):
+            self.creds = Credentials.from_authorized_user_file("credentials/token.json", SCOPES)
             if not self.creds or not self.creds.valid:
                 print("Creds invalid")
                 if self.creds and self.creds.expired and self.creds.refresh_token:
@@ -54,16 +54,16 @@ class TaskListWindow(QMainWindow):
                 else:
                     print("Getting new token")
                     flow = InstalledAppFlow.from_client_secrets_file(
-                        "credentials.json", SCOPES
+                        "credentials/credentials.json", SCOPES
                     )
                     self.creds = flow.run_local_server(port=0)
                 # Save the credentials for the next run
-                with open("token.json", "w") as token:
+                with open("credentials/token.json", "w") as token:
                     token.write(self.creds.to_json())
         else:
-            flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
+            flow = InstalledAppFlow.from_client_secrets_file("credentials/credentials.json", SCOPES)
             self.creds = flow.run_local_server(port=0)
-            with open("token.json", "w") as token:
+            with open("credentials/token.json", "w") as token:
                 token.write(self.creds.to_json())
 
         self.service = build("tasks", "v1", credentials=self.creds)
@@ -89,7 +89,7 @@ class TaskListWindow(QMainWindow):
                 # Token has expired, refresh it
                 print(f"Token has expired: {e}")
                 self.creds.refresh_grant(Request())
-            with open("token.json", "w") as token:
+            with open("credentials/token.json", "w") as token:
                 token.write(self.creds.to_json())
 
     def initUI(self):
