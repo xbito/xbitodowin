@@ -1,4 +1,11 @@
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel
+from PySide6.QtWidgets import (
+    QApplication,
+    QDialog,
+    QVBoxLayout,
+    QHBoxLayout,
+    QPushButton,
+    QLabel,
+)
 from PySide6.QtCore import QTimer, Qt
 
 
@@ -6,7 +13,7 @@ class CountdownPopup(QDialog):
     def __init__(self, app):
         self.app = app
         super().__init__()
-        self.setWindowTitle("Pomodoro Timer")
+        self.setWindowTitle("Xbitodowin - Pomodoro Timer")
         self.setGeometry(100, 100, 250, 115)
         self.layout = QVBoxLayout()
         self.layout.addStretch(1)
@@ -14,6 +21,13 @@ class CountdownPopup(QDialog):
 
         # Set the window to always stay on top
         self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
+
+        # Positioning the window near the top right of the screen
+        screen = QApplication.primaryScreen()
+        screen_geometry = screen.geometry()
+        x = screen_geometry.width() * 0.9 - self.width()  # 10% from the right edge
+        y = screen_geometry.height() * 0.1  # 10% from the top
+        self.move(int(x), int(y))
 
         # Create a horizontal layout for buttons and the countdown label
         self.controls_layout = QHBoxLayout()
