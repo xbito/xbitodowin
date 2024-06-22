@@ -19,10 +19,15 @@ class CountdownPopup(QDialog):
         self.controls_layout = QHBoxLayout()
 
         # Create control buttons
-        self.reverse_button = QPushButton("<<")
-        self.fast_reverse_button = QPushButton("<<<")
-        self.forward_button = QPushButton(">>")
-        self.fast_forward_button = QPushButton(">>>")
+        self.reverse_button = QPushButton("-")
+        self.fast_reverse_button = QPushButton("--")
+        self.forward_button = QPushButton("+")
+        self.fast_forward_button = QPushButton("++")
+
+        self.reverse_button.clicked.connect(lambda: self.adjust_timer(-1))
+        self.fast_reverse_button.clicked.connect(lambda: self.adjust_timer(-5))
+        self.forward_button.clicked.connect(lambda: self.adjust_timer(1))
+        self.fast_forward_button.clicked.connect(lambda: self.adjust_timer(5))
 
         # Add buttons to the controls layout
         self.controls_layout.addWidget(self.fast_reverse_button)
@@ -84,3 +89,22 @@ class CountdownPopup(QDialog):
         self.countdown_label.setText("30:00")
         self.start_pause_button.setText("Start")
         self.is_timer_running = False
+
+    def adjust_timer(self, minutes_change):
+        # Convert minutes to seconds
+        seconds_change = minutes_change * 60
+        new_remaining_seconds = self.remaining_seconds + seconds_change
+
+        # Ensure the timer is within the 1 to 120 minutes range
+        if new_remaining_seconds < 60:
+            self.remaining_seconds = 60  # Minimum of 1 minute
+        elif new_remaining_seconds > 7200:
+            self.remaining_seconds = 7200  # Maximum of 120 minutes
+        else:
+            self.remaining_seconds = new_remaining_seconds
+
+        self.update_countdown_display()
+
+    def update_countdown_display(self):
+        minutes, seconds = divmod(self.remaining_seconds, 60)
+        self.countdown_label.setText(f"{minutes:02d}:{seconds:02d}")
