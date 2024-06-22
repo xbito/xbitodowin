@@ -20,9 +20,16 @@ class CountdownPopup(QDialog):
         self.start_pause_button.clicked.connect(self.toggle_timer)
         self.layout.addWidget(self.start_pause_button)
 
+        # Adding a Reset button
+        self.reset_button = QPushButton("Reset")
+        self.reset_button.setStyleSheet("font-size: 18px; padding: 5px;")
+        self.reset_button.clicked.connect(self.reset_timer)
+        self.layout.addWidget(self.reset_button)
+
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_countdown)
-        self.remaining_seconds = 1800  # 30 minutes
+        self.initial_seconds = 1800  # 30 minutes
+        self.remaining_seconds = self.initial_seconds
         self.is_timer_running = False  # Track timer state
 
     def toggle_timer(self):
@@ -43,3 +50,10 @@ class CountdownPopup(QDialog):
             self.start_pause_button.setText("Start")
             self.is_timer_running = False
             self.app.beep()
+
+    def reset_timer(self):
+        self.timer.stop()
+        self.remaining_seconds = self.initial_seconds
+        self.countdown_label.setText("30:00")
+        self.start_pause_button.setText("Start")
+        self.is_timer_running = False
