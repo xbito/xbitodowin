@@ -1,4 +1,5 @@
 from TaskListSidebar import TaskListSidebar
+from CountdownPopup import CountdownPopup
 from exports import export_tasks_to_csv, export_tasks_to_excel, export_tasks_to_gsheet
 from motivation import get_motivational_phrase
 from stylesheet import UI_STYLESHEET
@@ -19,6 +20,7 @@ from PySide6.QtWidgets import (
     QGroupBox,
     QRadioButton,
     QButtonGroup,
+    QPushButton,
 )
 from google.auth.exceptions import RefreshError
 from google.auth.transport.requests import Request
@@ -45,7 +47,9 @@ class TaskListWindow(QMainWindow):
         self.app = app
         # Load Google Tasks API
         if os.path.exists("credentials/token.json"):
-            self.creds = Credentials.from_authorized_user_file("credentials/token.json", SCOPES)
+            self.creds = Credentials.from_authorized_user_file(
+                "credentials/token.json", SCOPES
+            )
             if not self.creds or not self.creds.valid:
                 print("Creds invalid")
                 if self.creds and self.creds.expired and self.creds.refresh_token:
@@ -61,7 +65,9 @@ class TaskListWindow(QMainWindow):
                 with open("credentials/token.json", "w") as token:
                     token.write(self.creds.to_json())
         else:
-            flow = InstalledAppFlow.from_client_secrets_file("credentials/credentials.json", SCOPES)
+            flow = InstalledAppFlow.from_client_secrets_file(
+                "credentials/credentials.json", SCOPES
+            )
             self.creds = flow.run_local_server(port=0)
             with open("credentials/token.json", "w") as token:
                 token.write(self.creds.to_json())
@@ -74,6 +80,18 @@ class TaskListWindow(QMainWindow):
         super().__init__()
         self.about_popup = None
         self.initUI()
+        self.setup_countdown_button()
+
+    def setup_countdown_button(self):
+        self.countdown_button = QPushButton("Open Pomodoro Timer", self)
+        self.countdown_button.clicked.connect(self.open_countdown_popup)
+        self.layout().addWidget(
+            self.countdown_button
+        )  # Assuming TaskListWindow has a layout
+
+    def open_countdown_popup(self):
+        self.countdown_popup = CountdownPopup(self.app)
+        self.countdown_popup.show()
 
     def get_user_info(self):
         user_info = self.profile_service.userinfo().get().execute()
