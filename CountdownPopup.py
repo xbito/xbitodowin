@@ -1,5 +1,5 @@
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QPushButton, QLabel
-from PySide6.QtCore import QTimer
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel
+from PySide6.QtCore import QTimer, Qt
 
 
 class CountdownPopup(QDialog):
@@ -7,13 +7,38 @@ class CountdownPopup(QDialog):
         self.app = app
         super().__init__()
         self.setWindowTitle("Pomodoro Timer")
-        self.setGeometry(100, 100, 200, 100)
+        self.setGeometry(100, 100, 250, 115)
         self.layout = QVBoxLayout()
+        self.layout.addStretch(1)
         self.setLayout(self.layout)
+
+        # Set the window to always stay on top
+        self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
+
+        # Create a horizontal layout for buttons and the countdown label
+        self.controls_layout = QHBoxLayout()
+
+        # Create control buttons
+        self.reverse_button = QPushButton("<<")
+        self.fast_reverse_button = QPushButton("<<<")
+        self.forward_button = QPushButton(">>")
+        self.fast_forward_button = QPushButton(">>>")
+
+        # Add buttons to the controls layout
+        self.controls_layout.addWidget(self.fast_reverse_button)
+        self.controls_layout.addWidget(self.reverse_button)
 
         self.countdown_label = QLabel("30:00")
         self.countdown_label.setStyleSheet("font-size: 24px;")
-        self.layout.addWidget(self.countdown_label)
+        self.countdown_label.setAlignment(Qt.AlignCenter)
+        # Add the countdown label to the controls layout
+        self.controls_layout.addWidget(self.countdown_label)
+
+        self.controls_layout.addWidget(self.forward_button)
+        self.controls_layout.addWidget(self.fast_forward_button)
+
+        # Add the controls layout to the main layout
+        self.layout.addLayout(self.controls_layout)
 
         self.start_pause_button = QPushButton("Start")
         self.start_pause_button.setStyleSheet("font-size: 18px; padding: 5px;")
@@ -31,6 +56,8 @@ class CountdownPopup(QDialog):
         self.initial_seconds = 1800  # 30 minutes
         self.remaining_seconds = self.initial_seconds
         self.is_timer_running = False  # Track timer state
+
+        self.layout.addStretch(1)
 
     def toggle_timer(self):
         if self.is_timer_running:
