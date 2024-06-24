@@ -10,6 +10,34 @@ from PySide6.QtCore import QTimer, Qt
 from pydub import AudioSegment
 from pydub.generators import Sine
 import simpleaudio as sa
+import sqlite3
+from datetime import datetime
+
+
+def init_pomodoro_db():
+    # Function to create/connect to a SQLite database and create the table if it doesn't exist
+    conn = sqlite3.connect("pomodoro_sessions.db")
+    c = conn.cursor()
+    c.execute(
+        """CREATE TABLE IF NOT EXISTS session_feedback
+                 (start_time TEXT, end_time TEXT, feeling TEXT)"""
+    )
+    conn.commit()
+    conn.close()
+
+
+def insert_pomodoro_session(start_time, end_time, feeling):
+    if not start_time:
+        return  # Do not proceed if start_time is not set
+    # Function to insert a session record into the database
+    conn = sqlite3.connect("pomodoro_sessions.db")
+    c = conn.cursor()
+    c.execute(
+        "INSERT INTO session_feedback (start_time, end_time, feeling) VALUES (?, ?, ?)",
+        (start_time, end_time, feeling),
+    )
+    conn.commit()
+    conn.close()
 
 
 def play_melody():
@@ -39,6 +67,10 @@ def play_melody():
 class CountdownPopup(QDialog):
     def __init__(self, app):
         self.app = app
+        self.start_time = None  # To store the session start time
+        # Initialize the database
+        init_pomodoro_db()
+
         super().__init__()
         self.setWindowTitle("Xbitodowin - Pomodoro Timer")
         self.setGeometry(100, 100, 250, 115)
@@ -105,13 +137,32 @@ class CountdownPopup(QDialog):
 
         self.layout.addStretch(1)
 
+        # Emoticon buttons for feedback
+        self.happy_button = QPushButton("😊")
+        self.sad_button = QPushButton("😞")
+        self.happy_button.clicked.connect(lambda: self.record_feedback("happy"))
+        self.sad_button.clicked.connect(lambda: self.record_feedback("sad"))
+        # Add emoticon buttons to the layout
+        self.layout.addWidget(self.happy_button)
+        self.layout.addWidget(self.sad_button)
+        self.happy_button.setEnabled(False)
+        self.sad_button.setEnabled(False)
+
     def toggle_timer(self):
+        if not self.is_timer_running:
+            self.start_time = datetime.now().strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )  # Store start time
         if self.is_timer_running:
             self.timer.stop()
             self.start_pause_button.setText("Start")
+            self.happy_button.setEnabled(True)
+            self.sad_button.setEnabled(True)
         else:
             self.timer.start(1000)  # Update every second
             self.start_pause_button.setText("Pause")
+            self.happy_button.setEnabled(False)
+            self.sad_button.setEnabled(False)
         self.is_timer_running = not self.is_timer_running
 
     def update_countdown(self):
@@ -122,6 +173,8 @@ class CountdownPopup(QDialog):
             self.timer.stop()
             self.start_pause_button.setText("Start")
             self.is_timer_running = False
+            self.happy_button.setEnabled(True)
+            self.sad_button.setEnabled(True)
             play_melody()
 
     def reset_timer(self):
@@ -130,6 +183,8 @@ class CountdownPopup(QDialog):
         self.countdown_label.setText("30:00")
         self.start_pause_button.setText("Start")
         self.is_timer_running = False
+        self.happy_button.setEnabled(False)
+        self.sad_button.setEnabled(False)
 
     def adjust_timer(self, minutes_change):
         # Convert minutes to seconds
@@ -149,3 +204,9 @@ class CountdownPopup(QDialog):
     def update_countdown_display(self):
         minutes, seconds = divmod(self.remaining_seconds, 60)
         self.countdown_label.setText(f"{minutes:02d}:{seconds:02d}")
+
+    def record_feedback(self, feeling):
+        if self.start_time:
+            end_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            insert_pomodoro_session(self.start_time, end_time, feeling)
+            self.start_time = None  # Reset start time after recording feedback
