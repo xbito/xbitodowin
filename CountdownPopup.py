@@ -7,6 +7,33 @@ from PySide6.QtWidgets import (
     QLabel,
 )
 from PySide6.QtCore import QTimer, Qt
+from pydub import AudioSegment
+from pydub.generators import Sine
+import simpleaudio as sa
+
+
+def play_melody():
+    # Create a celebratory melody with a sequence of notes
+    durations = [250, 250, 300, 200, 250, 300, 450]  # Durations in milliseconds
+    note1 = Sine(523).to_audio_segment(duration=durations[0])  # C5
+    note2 = Sine(587).to_audio_segment(duration=durations[1])  # D5
+    note3 = Sine(659).to_audio_segment(duration=durations[2])  # E5
+    note4 = Sine(784).to_audio_segment(duration=durations[3])  # G5
+    note5 = Sine(880).to_audio_segment(duration=durations[4])  # A5
+    note6 = Sine(988).to_audio_segment(duration=durations[5])  # B5
+    note7 = Sine(1046).to_audio_segment(duration=durations[6])  # C6
+
+    # Combine the notes to form a melody
+    melody = note1 + note2 + note3 + note4 + note5 + note6 + note7
+
+    # Play the melody
+    play_obj = sa.play_buffer(
+        melody.raw_data,
+        num_channels=melody.channels,
+        bytes_per_sample=melody.sample_width,
+        sample_rate=melody.frame_rate,
+    )
+    play_obj.wait_done()
 
 
 class CountdownPopup(QDialog):
@@ -95,7 +122,7 @@ class CountdownPopup(QDialog):
             self.timer.stop()
             self.start_pause_button.setText("Start")
             self.is_timer_running = False
-            self.app.beep()
+            play_melody()
 
     def reset_timer(self):
         self.timer.stop()

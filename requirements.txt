@@ -5,3 +5,5 @@ openai
 PySide6
 oauth2client
 openpyxl
+pydub
+simpleaudio
