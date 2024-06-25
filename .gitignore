@@ -164,3 +164,6 @@ ideas.txt
 
 # Credentials folder
 credentials/
+
+# DB files
+*.db
