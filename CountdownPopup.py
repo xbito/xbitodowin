@@ -65,7 +65,8 @@ def play_melody():
 
 
 class CountdownPopup(QDialog):
-    def __init__(self, app):
+    def __init__(self, app, phrase):
+        self.phrase = phrase
         self.app = app
         self.start_time = None  # To store the session start time
         # Initialize the database
@@ -147,6 +148,17 @@ class CountdownPopup(QDialog):
         self.layout.addWidget(self.sad_button)
         self.happy_button.setEnabled(False)
         self.sad_button.setEnabled(False)
+        # Display the motivational phrase
+        self.show_motivational_phrase()
+
+    def show_motivational_phrase(self):
+        # Display the Phrase in the popup
+        self.motivational_phrase_label = QLabel(self.phrase)
+        self.motivational_phrase_label.setAlignment(Qt.AlignCenter)
+        self.motivational_phrase_label.setStyleSheet(
+            "font-size: 16px; font-weight: bold;"
+        )
+        self.layout.insertWidget(0, self.motivational_phrase_label)
 
     def toggle_timer(self):
         if not self.is_timer_running:

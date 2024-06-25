@@ -90,7 +90,7 @@ class TaskListWindow(QMainWindow):
         )  # Assuming TaskListWindow has a layout
 
     def open_countdown_popup(self):
-        self.countdown_popup = CountdownPopup(self.app)
+        self.countdown_popup = CountdownPopup(self.app, self.phrase)
         self.countdown_popup.show()
 
     def get_user_info(self):
@@ -236,9 +236,9 @@ class TaskListWindow(QMainWindow):
         self.setStyleSheet(UI_STYLESHEET)
 
     def show_motivational_phrase(self):
-        phrase = get_motivational_phrase()
+        self.phrase = get_motivational_phrase()
         # Display the Phrase at the top of the UI
-        self.motivational_phrase_label = QLabel(phrase)
+        self.motivational_phrase_label = QLabel(self.phrase)
         self.motivational_phrase_label.setAlignment(Qt.AlignCenter)
         self.motivational_phrase_label.setStyleSheet(
             "font-size: 16px; font-weight: bold;"
