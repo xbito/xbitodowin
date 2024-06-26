@@ -458,7 +458,7 @@ class TaskListWindow(QMainWindow):
         self.about_popup.setWindowTitle("About")
         self.about_popup.setGeometry(100, 100, 200, 100)
         label = QLabel(
-            "Author: Fernando (Xbito) Gutierrez with the help of multiple AIs: Llama, qwen, gpt and Gemini"
+            "Author: Fernando (Xbito) Gutierrez with the help of multiple AIs: Github Copilot, Llama, qwen, gpt and Gemini"
         )
         self.about_popup.setLayout(QVBoxLayout())
         self.about_popup.layout().addWidget(label)
