@@ -603,8 +603,16 @@ class TaskListWindow(QMainWindow):
         self.load_task_lists()
 
     def closeEvent(self, event):
-        self.close_about_popup()
-        event.accept()
+        if self.countdown_popup and self.countdown_popup.is_timer_running:
+            # Prevent closing, play beep sound, and flash the popup
+            self.app.beep()
+            self.countdown_popup.flash_window()  # You need to implement this method
+            event.ignore()  # Prevent the main window from closing
+        else:
+            # Close both the main window and the countdown popup
+            if self.countdown_popup:
+                self.countdown_popup.close()
+            event.accept()
 
     def handle_title_click(self, row, column):
         if column == 0:

@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QPushButton,
     QLabel,
+    QStyle,
 )
 from PySide6.QtCore import QTimer, Qt
 from pydub import AudioSegment
@@ -160,6 +161,22 @@ class CountdownPopup(QDialog):
         )
         self.layout.insertWidget(0, self.motivational_phrase_label)
 
+    def flash_window(self):
+        # Assuming self.app is a QApplication instance
+        originalIcon = self.app.windowIcon()
+        flashIcon = self.app.style().standardIcon(QStyle.SP_MessageBoxWarning)
+
+        # Set to a different icon to create a "flash" effect
+        self.app.setWindowIcon(flashIcon)
+
+        # Restore the original icon after a delay
+        QTimer.singleShot(500, lambda: self.app.setWindowIcon(originalIcon))
+
+        # If you want to flash it back to the flashIcon again after another delay
+        QTimer.singleShot(1000, lambda: self.app.setWindowIcon(flashIcon))
+        # Restore the original icon again
+        QTimer.singleShot(1500, lambda: self.app.setWindowIcon(originalIcon))
+
     def toggle_timer(self):
         if not self.is_timer_running:
             self.start_time = datetime.now().strftime(
@@ -222,3 +239,7 @@ class CountdownPopup(QDialog):
             end_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             insert_pomodoro_session(self.start_time, end_time, feeling)
             self.start_time = None  # Reset start time after recording feedback
+
+    def closeEvent(self, event):
+        self.reset_timer()
+        event.accept()  # Ensures the window closes smoothly
