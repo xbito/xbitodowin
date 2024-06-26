@@ -81,13 +81,12 @@ class TaskListWindow(QMainWindow):
         self.about_popup = None
         self.initUI()
         self.setup_countdown_button()
+        # Add to the sidebar layout at the top and to the left
+        self.sidebar_widget.layout().insertWidget(0, self.countdown_button)
 
     def setup_countdown_button(self):
         self.countdown_button = QPushButton("Open Pomodoro Timer", self)
         self.countdown_button.clicked.connect(self.open_countdown_popup)
-        self.layout().addWidget(
-            self.countdown_button
-        )  # Assuming TaskListWindow has a layout
 
     def open_countdown_popup(self):
         self.countdown_popup = CountdownPopup(self.app, self.phrase)
