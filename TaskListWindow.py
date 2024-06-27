@@ -7,6 +7,7 @@ from stylesheet import UI_STYLESHEET
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QAction, QGuiApplication, QIcon
 from PySide6.QtWidgets import (
+    QApplication,
     QDialog,
     QHBoxLayout,
     QLabel,
@@ -310,6 +311,7 @@ class TaskListWindow(QMainWindow):
         """
         Filters the tasks based on the selected filter.
         """
+        self.set_waiting_cursor()
         # Get the current date in the user's timezone
         user_tz = pytz.timezone("America/New_York")  # Replace with your timezone
         current_date = datetime.now(user_tz).date()
@@ -381,6 +383,8 @@ class TaskListWindow(QMainWindow):
         elif selected_button == self.recently_completed_radio_button:
             # Order by Completed, most recently completed first and going to the past
             self.order_tasks_by_completed_date(ascending=False)
+
+        self.reset_cursor()
 
     def order_tasks_by_due_date(self, ascending):
         # Implement logic to order tasks by due date
@@ -635,3 +639,9 @@ class TaskListWindow(QMainWindow):
                 # Open the web view link in the browser
                 if web_view_link:
                     webbrowser.open(web_view_link)
+
+    def set_waiting_cursor(self):
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+    
+    def reset_cursor(self):
+        QApplication.restoreOverrideCursor()
