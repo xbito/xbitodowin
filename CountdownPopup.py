@@ -262,6 +262,7 @@ class CountdownPopup(QDialog):
             end_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             insert_pomodoro_session(self.start_time, end_time, feeling)
             self.start_time = None  # Reset start time after recording feedback
+            self.reset_timer()
 
     def closeEvent(self, event):
         self.reset_timer()
