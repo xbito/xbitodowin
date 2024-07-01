@@ -56,8 +56,8 @@ def play_melody():
     ]
 
     # Initial and final volumes as a percentage
-    initial_volume = 0.4
-    final_volume = 0.6
+    initial_volume = 0.1
+    final_volume = 0.5
 
     # Calculate the volume increase per note
     volume_step = (final_volume - initial_volume) / (len(notes) - 1)
