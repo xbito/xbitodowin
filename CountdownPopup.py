@@ -338,36 +338,13 @@ class CountdownPopup(QDialog):
         )  # Day ends at 11 PM
         total_day_seconds = (end_time - start_time).total_seconds()
         current_seconds = (current_time - start_time).total_seconds()
-        # Print debug information about seconds calculated
-        print(
-            f"Current seconds: {current_seconds}, Total day seconds: {total_day_seconds}"
-        )
         if current_time < start_time:
             progress = 0
         elif current_time > end_time:
             progress = 100
         else:
             progress = (current_seconds / total_day_seconds) * 100
-        print(f"Progress: {progress}")
         self.progress_bar.setValue(int(progress))
-
-    #        self.set_progress_bar_color(progress)
-
-    def set_progress_bar_color(self, progress):
-        if progress <= 40:
-            color = "green"
-        elif progress <= 70:
-            color = "yellow"
-        else:
-            color = "red"
-        self.progress_bar.setStyleSheet(
-            """
-            QProgressBar::chunk {
-                background-color: %s};
-            }
-            """
-            % color
-        )
 
     def apply_dark_theme(self):
         # Set the dark theme for the window
