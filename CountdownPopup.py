@@ -7,13 +7,16 @@ from PySide6.QtWidgets import (
     QLabel,
     QStyle,
 )
-from PySide6.QtCore import QTimer, Qt
+from PySide6.QtCore import QTimer, Qt, QDate
+from PySide6.QtGui import QColor, QPalette
 from pydub import AudioSegment
 from pydub.generators import Sine
 import simpleaudio as sa
 import sqlite3
-from datetime import datetime
+from datetime import datetime, time
 from math import log10
+
+from MultiColorProgressBar import MultiColorProgressBar
 
 
 def init_pomodoro_db():
@@ -103,6 +106,14 @@ class CountdownPopup(QDialog):
         self.layout.addStretch(1)
         self.setLayout(self.layout)
 
+        self.init_date_day_label()
+        self.init_progress_bar()
+        self.update_progress_bar()
+        # Update the progress bar and date/day label every minute
+        self.update_timer = QTimer(self)
+        self.update_timer.timeout.connect(self.update_progress_bar)
+        self.update_timer.start(60000)  # Update every minute
+
         # Set the window to always stay on top
         self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
 
@@ -174,6 +185,7 @@ class CountdownPopup(QDialog):
         self.sad_button.setEnabled(False)
         # Display the motivational phrase
         self.show_motivational_phrase()
+        self.apply_dark_theme()
 
     def show_motivational_phrase(self):
         # Display the Phrase in the popup
@@ -263,6 +275,136 @@ class CountdownPopup(QDialog):
             insert_pomodoro_session(self.start_time, end_time, feeling)
             self.start_time = None  # Reset start time after recording feedback
             self.reset_timer()
+
+    def init_date_day_label(self):
+        # Get the current date
+        current_date = QDate.currentDate()
+
+        # Format the date
+        date_text = current_date.toString("dd")
+        month_text = current_date.toString("MMM")
+        year_text = current_date.toString("yyyy")
+        day_text = current_date.toString("dddd")
+
+        # Create labels
+        self.date_label = QLabel(date_text)
+        self.month_label = QLabel(month_text)
+        self.year_label = QLabel(year_text)
+        self.day_label = QLabel(day_text)
+
+        # Set styles
+        self.date_label.setStyleSheet(
+            "color: white; font-size: 60px; font-weight: bold;"
+        )
+        self.month_label.setStyleSheet(
+            "color: white; font-size: 20px; font-weight: bold;"
+        )
+        self.year_label.setStyleSheet("color: white; font-size: 20px;")
+        self.day_label.setStyleSheet("color: white; font-size: 20px;")
+
+        # Align text
+        self.date_label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        self.month_label.setAlignment(Qt.AlignLeft)
+        self.year_label.setAlignment(Qt.AlignLeft)
+        self.day_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+        # Create date layout
+        date_layout = QVBoxLayout()
+        date_layout.addWidget(self.month_label)
+        date_layout.addWidget(self.year_label)
+        date_layout.setSpacing(2)  # Reduce space between month and year
+
+        # Create main layout for date and day
+        date_day_layout = QHBoxLayout()
+        date_day_layout.setSpacing(1)
+        date_day_layout.addWidget(self.date_label)
+        date_day_layout.addLayout(date_layout)
+        date_day_layout.addWidget(self.day_label)
+
+        # Add the date and day layout to the main layout of the dialog
+        self.layout.addLayout(date_day_layout)
+
+    def init_progress_bar(self):
+        self.progress_bar = MultiColorProgressBar(self)
+        self.layout.addWidget(self.progress_bar)
+
+    def update_progress_bar(self):
+        current_time = datetime.now()
+        start_time = datetime.combine(
+            current_time.date(), time(5, 0)
+        )  # Day starts at 5 AM
+        end_time = datetime.combine(
+            current_time.date(), time(23, 0)
+        )  # Day ends at 11 PM
+        total_day_seconds = (end_time - start_time).total_seconds()
+        current_seconds = (current_time - start_time).total_seconds()
+        # Print debug information about seconds calculated
+        print(
+            f"Current seconds: {current_seconds}, Total day seconds: {total_day_seconds}"
+        )
+        if current_time < start_time:
+            progress = 0
+        elif current_time > end_time:
+            progress = 100
+        else:
+            progress = (current_seconds / total_day_seconds) * 100
+        print(f"Progress: {progress}")
+        self.progress_bar.setValue(int(progress))
+
+    #        self.set_progress_bar_color(progress)
+
+    def set_progress_bar_color(self, progress):
+        if progress <= 40:
+            color = "green"
+        elif progress <= 70:
+            color = "yellow"
+        else:
+            color = "red"
+        self.progress_bar.setStyleSheet(
+            """
+            QProgressBar::chunk {
+                background-color: %s};
+            }
+            """
+            % color
+        )
+
+    def apply_dark_theme(self):
+        # Set the dark theme for the window
+        self.setStyleSheet(
+            """
+            QDialog {
+                background-color: #333333;
+                color: #ffffff;
+            }
+            QPushButton {
+                background-color: #555555;
+                color: #ffffff;
+                border: 1px solid #777777;
+                padding: 5px;
+            }
+            QPushButton:hover {
+                background-color: #666666;
+            }
+            QPushButton:disabled {
+                background-color: #444444;
+                color: #aaaaaa;
+            }
+            QLabel {
+                color: #ffffff;
+            }
+            QProgressBar {
+                background-color: #444444;
+                color: #ffffff;
+                border-radius: 5px;
+                text-align: center;
+            }
+            QProgressBar::chunk {
+                background-color: #22aa22;
+                width: 20px; /* Used to increase chunk size */
+            }
+        """
+        )
 
     def closeEvent(self, event):
         self.reset_timer()
