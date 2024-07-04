@@ -1,5 +1,4 @@
 from TaskListSidebar import TaskListSidebar
-from CountdownPopup import CountdownPopup
 from exports import export_tasks_to_csv, export_tasks_to_excel, export_tasks_to_gsheet
 from motivation import get_motivational_phrase
 from stylesheet import UI_STYLESHEET
@@ -81,17 +80,6 @@ class TaskListWindow(QMainWindow):
         super().__init__()
         self.about_popup = None
         self.initUI()
-        self.setup_countdown_button()
-        # Add to the sidebar layout at the top and to the left
-        self.sidebar_widget.layout().insertWidget(0, self.countdown_button)
-
-    def setup_countdown_button(self):
-        self.countdown_button = QPushButton("Open Pomodoro Timer", self)
-        self.countdown_button.clicked.connect(self.open_countdown_popup)
-
-    def open_countdown_popup(self):
-        self.countdown_popup = CountdownPopup(self.app, self.phrase)
-        self.countdown_popup.show()
 
     def get_user_info(self):
         user_info = self.profile_service.userinfo().get().execute()
@@ -642,6 +630,6 @@ class TaskListWindow(QMainWindow):
 
     def set_waiting_cursor(self):
         QApplication.setOverrideCursor(Qt.WaitCursor)
-    
+
     def reset_cursor(self):
         QApplication.restoreOverrideCursor()
