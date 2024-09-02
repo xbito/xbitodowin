@@ -99,59 +99,70 @@ class TaskListWindow(QMainWindow):
                 token.write(self.creds.to_json())
 
     def initUI(self):
+        # Set the window title and icon
         self.setWindowTitle(
             "Xbitodowin | Google Tasks Viewer"
-        )  # Set the icon for the application
-        icon_path = "output.ico.32x32.png"
-        self.app.setWindowIcon(QIcon(icon_path))
+        )
+        self.setWindowIcon(QIcon("output.ico.32x32.png"))
+        # Initialize the main layout
+        self.center_window()
+        self.create_sidebar()
+        self.create_filter_group_box()
+        self.create_main_layout()
+        self.create_search_bar()
+        self.create_task_table()
+        self.create_horizontal_layout()
+        self.create_vertical_layout()
+        self.create_menu()
+        # Set a flat stylesheet for the window
+        self.setStyleSheet(UI_STYLESHEET)
+
+    def center_window(self):
         # Get the resolution of the screen
         screenRect = QGuiApplication.primaryScreen().availableGeometry()
-
         # Calculate the center position of the screen
         centerPositionX = (screenRect.width() - 1280) // 2
         centerPositionY = (screenRect.height() - 800) // 2
-
         # Set the geometry of your application to the calculated center position
         self.setGeometry(centerPositionX, centerPositionY, 1280, 800)
+        
 
+    def create_sidebar(self):
         # Create a sidebar for task lists
         self.task_list_sidebar = TaskListSidebar(window=self)
+        # TODO: Fix this, we are hooking the same signal twice
+        # Connect the currentItemChanged signal to the uncheck_radio_buttons method
+        self.task_list_sidebar.currentItemChanged.connect(self.uncheck_radio_buttons)
+        # Connect the currentItemChanged signal to the refresh_tasks method
+        self.task_list_sidebar.currentItemChanged.connect(self.refresh_tasks)
 
+    def create_filter_group_box(self):
         # Create a group box for filter options
         self.filter_group_box = QGroupBox("Filter tasks")
         self.filter_layout = QVBoxLayout()
+        self.create_radio_buttons()
+        # Set the filter layout to the group box
+        self.filter_group_box.setLayout(self.filter_layout)
 
-        # Create a main layout for the content
-        main_layout = QVBoxLayout()
-
-        # Fetch user info, email
-        self.user_email_label = QLabel(self.get_user_info()["email"])
-        main_layout.addWidget(self.user_email_label)
-
+    def create_radio_buttons(self):
         # Create radio buttons for filter options
         self.today_radio_button = QRadioButton("Today")
         self.next_days_radio_button = QRadioButton("Next Days")
         self.overdue_radio_button = QRadioButton("Overdue")
         self.recently_completed_radio_button = QRadioButton("Recently completed")
-
         # Connect the toggled signal to the filter_tasks method
         self.today_radio_button.toggled.connect(self.filter_tasks)
         self.next_days_radio_button.toggled.connect(self.filter_tasks)
         self.overdue_radio_button.toggled.connect(self.filter_tasks)
         self.recently_completed_radio_button.toggled.connect(self.filter_tasks)
-
         # Create a button group for the radio buttons
         self.radio_button_group = QButtonGroup()
         self.radio_button_group.addButton(self.today_radio_button)
         self.radio_button_group.addButton(self.next_days_radio_button)
         self.radio_button_group.addButton(self.overdue_radio_button)
         self.radio_button_group.addButton(self.recently_completed_radio_button)
-
         # Connect the buttonClicked signal to the deselect_task_list method
         self.radio_button_group.buttonClicked.connect(self.deselect_task_list)
-
-        # Connect the currentItemChanged signal to the uncheck_radio_buttons method
-        self.task_list_sidebar.currentItemChanged.connect(self.uncheck_radio_buttons)
 
         # Add radio buttons to the filter layout
         self.filter_layout.addWidget(self.today_radio_button)
@@ -159,9 +170,33 @@ class TaskListWindow(QMainWindow):
         self.filter_layout.addWidget(self.overdue_radio_button)
         self.filter_layout.addWidget(self.recently_completed_radio_button)
 
-        # Set the filter layout to the group box
-        self.filter_group_box.setLayout(self.filter_layout)
+    def create_main_layout(self):
+        # Create a main layout for the content
+        self.main_layout = QVBoxLayout()
+        # Fetch user info, email
+        self.user_email_label = QLabel(self.get_user_info()["email"])
+        self.main_layout.addWidget(self.user_email_label)
 
+    def create_search_bar(self):
+        # Create a search bar
+        self.search_bar = QLineEdit()
+        self.search_bar.setPlaceholderText("Search tasks...")
+        self.search_bar.textChanged.connect(self.search_tasks)
+        self.main_layout.addWidget(self.search_bar)
+
+    def create_task_table(self):
+        self.task_table = QTableWidget()
+        self.task_table.setRowCount(0)
+        self.task_table.setColumnCount(5)
+        self.task_table.setHorizontalHeaderLabels(
+            ["Title", "Updated", "Due Date", "Notes", "Priority"]
+        )
+        # Connect the cellClicked signal to the handle_title_click method
+        self.task_table.cellClicked.connect(self.handle_title_click)
+        # Add the table to the main layout
+        self.main_layout.addWidget(self.task_table)
+
+    def create_horizontal_layout(self):
         # Create a vertical layout for the sidebar and filter group box
         sidebar_layout = QVBoxLayout()
         sidebar_layout.addWidget(self.filter_group_box)
@@ -170,58 +205,28 @@ class TaskListWindow(QMainWindow):
         # Create a widget for the sidebar and set the layout
         self.sidebar_widget = QWidget()
         self.sidebar_widget.setLayout(sidebar_layout)
-
-        # Create a search bar
-        self.search_bar = QLineEdit()
-        self.search_bar.setPlaceholderText("Search tasks...")
-        self.search_bar.textChanged.connect(self.search_tasks)
-        main_layout.addWidget(self.search_bar)
-
-        self.task_table = QTableWidget()
-        self.task_table.setRowCount(0)
-        self.task_table.setColumnCount(5)
-        self.task_table.setHorizontalHeaderLabels(
-            ["Title", "Updated", "Due Date", "Notes", "Priority"]
-        )
-        # Add the table to the main layout
-        main_layout.addWidget(self.task_table)
-
         # Create a horizontal layout for the sidebar and main content
         horizontal_layout = QHBoxLayout()
         horizontal_layout.addWidget(self.sidebar_widget)
-        horizontal_layout.addLayout(main_layout)
+        horizontal_layout.addLayout(self.main_layout)
 
         # Create a central widget and set the main layout
         # Set the horizontal layout as the central widget
         self.central_widget = QWidget()
         self.central_widget.setLayout(horizontal_layout)
 
+    def create_vertical_layout(self):
         # Create a new QVBoxLayout
         vertical_layout = QVBoxLayout()
-
         # Create the motivational_phrase_label and add it to the vertical layout
         self.show_motivational_phrase()
         vertical_layout.addWidget(self.motivational_phrase_label)
-
         # Add the central_widget to the vertical layout
         vertical_layout.addWidget(self.central_widget)
-
         # Create a new central widget and set the vertical layout as its layout
         new_central_widget = QWidget()
         new_central_widget.setLayout(vertical_layout)
         self.setCentralWidget(new_central_widget)
-
-        # Create a menu bar
-        self.create_menu()
-
-        # Connect the cellClicked signal to the handle_title_click method
-        self.task_table.cellClicked.connect(self.handle_title_click)
-
-        # Connect the currentItemChanged signal to the refresh_tasks method
-        self.task_list_sidebar.currentItemChanged.connect(self.refresh_tasks)
-
-        # Set a flat stylesheet for the window
-        self.setStyleSheet(UI_STYLESHEET)
 
     def show_motivational_phrase(self):
         self.phrase = get_motivational_phrase()
