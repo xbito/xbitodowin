@@ -30,6 +30,7 @@ from googleapiclient.discovery import build
 
 import os
 import webbrowser
+import requests
 from datetime import datetime, timedelta
 import pytz
 
@@ -128,7 +129,28 @@ class TaskListWindow(QMainWindow):
     def create_sidebar(self):
         # Create a sidebar for task lists
         self.task_list_sidebar = TaskListSidebar(window=self)
-        # TODO: Fix this, we are hooking the same signal twice
+        # Fetch user info, email
+        user_info = self.get_user_info()
+        self.user_avatar_label = QLabel()
+        self.user_avatar_label.setObjectName("userAvatar")
+        # Fetch the image data from the URL
+        image_url = self.profile_service.userinfo().get().execute()["picture"]
+        response = requests.get(image_url)
+        image_data = response.content  # Get the image data as bytes
+
+        pixmap = QPixmap()
+        pixmap.loadFromData(image_data)
+        self.user_avatar_label.setPixmap(
+            pixmap.scaled(50, 50, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        )
+
+        self.user_name_label = QLabel(user_info["name"])
+
+        # Create a layout for the user info
+        self.user_info_layout = QVBoxLayout()
+        self.user_info_layout.addWidget(self.user_avatar_label)
+        self.user_info_layout.addWidget(self.user_name_label)
+
         # Connect the currentItemChanged signal to the uncheck_radio_buttons method
         self.task_list_sidebar.currentItemChanged.connect(self.uncheck_radio_buttons)
         # Connect the currentItemChanged signal to the refresh_tasks method
@@ -171,16 +193,6 @@ class TaskListWindow(QMainWindow):
     def create_main_layout(self):
         # Create a main layout for the content
         self.main_layout = QVBoxLayout()
-        # Fetch user info, email
-        user_info = self.get_user_info()
-        self.user_avatar_label = QLabel()
-        self.user_avatar_label.setObjectName("userAvatar")
-        pixmap = QPixmap()
-        pixmap.loadFromData(self.profile_service.userinfo().get().execute()["picture"])
-        self.user_avatar_label.setPixmap(pixmap.scaled(50, 50, Qt.KeepAspectRatio, Qt.SmoothTransformation))
-        self.user_name_label = QLabel(user_info["name"])
-        self.main_layout.addWidget(self.user_avatar_label)
-        self.main_layout.addWidget(self.user_name_label)
 
     def create_search_bar(self):
         # Create a search bar
@@ -204,6 +216,7 @@ class TaskListWindow(QMainWindow):
     def create_horizontal_layout(self):
         # Create a vertical layout for the sidebar and filter group box
         sidebar_layout = QVBoxLayout()
+        sidebar_layout.addLayout(self.user_info_layout)
         sidebar_layout.addWidget(self.filter_group_box)
         sidebar_layout.addWidget(self.task_list_sidebar)
 
