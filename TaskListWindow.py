@@ -100,9 +100,7 @@ class TaskListWindow(QMainWindow):
 
     def initUI(self):
         # Set the window title and icon
-        self.setWindowTitle(
-            "Xbitodowin | Google Tasks Viewer"
-        )
+        self.setWindowTitle("Xbitodowin | Google Tasks Viewer")
         self.setWindowIcon(QIcon("output.ico.32x32.png"))
         # Initialize the main layout
         self.center_window()
@@ -126,7 +124,6 @@ class TaskListWindow(QMainWindow):
         centerPositionY = (screenRect.height() - 800) // 2
         # Set the geometry of your application to the calculated center position
         self.setGeometry(centerPositionX, centerPositionY, 1280, 800)
-        
 
     def create_sidebar(self):
         # Create a sidebar for task lists
@@ -361,6 +358,7 @@ class TaskListWindow(QMainWindow):
             and not self.recently_completed_radio_button.isChecked()
         ):
             # If no radio button is checked, do nothing
+            self.reset_cursor()
             return
 
         self.task_list_sidebar.render_tasks(filtered_tasks)
@@ -620,18 +618,6 @@ class TaskListWindow(QMainWindow):
 
     def start(self):
         self.load_task_lists()
-
-    def closeEvent(self, event):
-        if self.countdown_popup and self.countdown_popup.is_timer_running:
-            # Prevent closing, play beep sound, and flash the popup
-            self.app.beep()
-            self.countdown_popup.flash_window()  # You need to implement this method
-            event.ignore()  # Prevent the main window from closing
-        else:
-            # Close both the main window and the countdown popup
-            if self.countdown_popup:
-                self.countdown_popup.close()
-            event.accept()
 
     def handle_title_click(self, row, column):
         if column == 0:
