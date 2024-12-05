@@ -100,7 +100,9 @@ class TaskListWindow(QMainWindow):
 
     def initUI(self):
         # Set the window title and icon
-        self.setWindowTitle("Xbitodowin | Google Tasks Viewer")
+        self.setWindowTitle(
+            "Xbitodowin | Google Tasks Viewer"
+        )
         self.setWindowIcon(QIcon("output.ico.32x32.png"))
         # Initialize the main layout
         self.center_window()
@@ -112,6 +114,7 @@ class TaskListWindow(QMainWindow):
         self.create_horizontal_layout()
         self.create_vertical_layout()
         self.create_menu()
+        self.create_refresh_button()
         # Set a flat stylesheet for the window
         self.setStyleSheet(UI_STYLESHEET)
 
@@ -123,6 +126,7 @@ class TaskListWindow(QMainWindow):
         centerPositionY = (screenRect.height() - 800) // 2
         # Set the geometry of your application to the calculated center position
         self.setGeometry(centerPositionX, centerPositionY, 1280, 800)
+        
 
     def create_sidebar(self):
         # Create a sidebar for task lists
@@ -357,7 +361,6 @@ class TaskListWindow(QMainWindow):
             and not self.recently_completed_radio_button.isChecked()
         ):
             # If no radio button is checked, do nothing
-            self.reset_cursor()
             return
 
         self.task_list_sidebar.render_tasks(filtered_tasks)
@@ -403,7 +406,7 @@ class TaskListWindow(QMainWindow):
             2, Qt.AscendingOrder if ascending else Qt.DescendingOrder
         )
 
-    def refresh_tasks(self, current_item, previous_item):
+    def refresh_tasks(self, current_item=None, previous_item=None):
         """
         Refreshes the tasks associated with the currently selected task list.
 
@@ -411,12 +414,15 @@ class TaskListWindow(QMainWindow):
             current_item (QListWidgetItem): The currently selected item.
             previous_item (QListWidgetItem): The previously selected item.
         """
+        self.set_waiting_cursor()
+        if current_item is None:
+            current_item = self.task_list_sidebar.currentItem()
         # Get the ID of the task list associated with the current item
         task_list_id = current_item.data(Qt.UserRole)
 
         # Refresh the tasks associated with this task list
-        # (Assuming you have a method to do this)
         self.task_list_sidebar.load_tasks_by_task_list(task_list_id)
+        self.reset_cursor()
 
     def create_menu(self):
         self.menu_bar = self.menuBar()
@@ -445,6 +451,25 @@ class TaskListWindow(QMainWindow):
             )
         )
         export_menu.addAction(export_gsheet_action)
+
+    def create_refresh_button(self):
+        self.refresh_button = QPushButton("Refresh")
+        self.refresh_button.setEnabled(False)
+        self.refresh_button.setStyleSheet(
+            """
+            QPushButton {
+                border-radius: 10px;
+                padding: 5px;
+                background-color: #1E90FF;
+                color: #FFFFFF;
+            }
+            QPushButton:disabled {
+                background-color: #A9A9A9;
+            }
+            """
+        )
+        self.refresh_button.clicked.connect(self.refresh_tasks)
+        self.main_layout.addWidget(self.refresh_button)
 
     def show_about_popup(self):
         if self.about_popup is not None:
@@ -595,6 +620,18 @@ class TaskListWindow(QMainWindow):
 
     def start(self):
         self.load_task_lists()
+
+    def closeEvent(self, event):
+        if self.countdown_popup and self.countdown_popup.is_timer_running:
+            # Prevent closing, play beep sound, and flash the popup
+            self.app.beep()
+            self.countdown_popup.flash_window()  # You need to implement this method
+            event.ignore()  # Prevent the main window from closing
+        else:
+            # Close both the main window and the countdown popup
+            if self.countdown_popup:
+                self.countdown_popup.close()
+            event.accept()
 
     def handle_title_click(self, row, column):
         if column == 0:

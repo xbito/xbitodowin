@@ -89,3 +89,9 @@ class TaskListSidebar(QListWidget):
     def load_tasks_by_task_list(self, item):
         tasks = self.fetch_tasks_by_task_list(item)
         self.render_tasks(tasks)
+        self.window.refresh_button.setEnabled(True)
+
+    def refresh_tasks(self):
+        current_item = self.currentItem()
+        if current_item:
+            self.load_tasks_by_task_list(current_item)
