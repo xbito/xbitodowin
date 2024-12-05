@@ -75,4 +75,10 @@ TaskListSidebar::item:selected {
     background-color: #1E90FF;
     color: #FFFFFF;
 }
+QLabel#userAvatar {
+    border: 2px solid #1E90FF;
+    border-radius: 25px; /* Assuming the avatar is 50x50 pixels */
+    width: 50px;
+    height: 50px;
+}
 """

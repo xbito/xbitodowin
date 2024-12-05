@@ -4,7 +4,7 @@ from motivation import get_motivational_phrase
 from stylesheet import UI_STYLESHEET
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QAction, QGuiApplication, QIcon
+from PySide6.QtGui import QAction, QGuiApplication, QIcon, QPixmap
 from PySide6.QtWidgets import (
     QApplication,
     QDialog,
@@ -172,8 +172,15 @@ class TaskListWindow(QMainWindow):
         # Create a main layout for the content
         self.main_layout = QVBoxLayout()
         # Fetch user info, email
-        self.user_email_label = QLabel(self.get_user_info()["email"])
-        self.main_layout.addWidget(self.user_email_label)
+        user_info = self.get_user_info()
+        self.user_avatar_label = QLabel()
+        self.user_avatar_label.setObjectName("userAvatar")
+        pixmap = QPixmap()
+        pixmap.loadFromData(self.profile_service.userinfo().get().execute()["picture"])
+        self.user_avatar_label.setPixmap(pixmap.scaled(50, 50, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        self.user_name_label = QLabel(user_info["name"])
+        self.main_layout.addWidget(self.user_avatar_label)
+        self.main_layout.addWidget(self.user_name_label)
 
     def create_search_bar(self):
         # Create a search bar
