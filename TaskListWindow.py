@@ -404,20 +404,19 @@ class TaskListWindow(QMainWindow):
             2, Qt.AscendingOrder if ascending else Qt.DescendingOrder
         )
 
-    def refresh_tasks(self, current_item=None, previous_item=None):
+    def refresh_tasks(self, current_item=None):
         """
         Refreshes the tasks associated with the currently selected task list.
 
         Args:
             current_item (QListWidgetItem): The currently selected item.
-            previous_item (QListWidgetItem): The previously selected item.
         """
         self.set_waiting_cursor()
-        if current_item is None:
-            current_item = self.task_list_sidebar.currentItem()
-        # Get the ID of the task list associated with the current item
-        task_list_id = current_item.data(Qt.UserRole)
-
+        if current_item:
+            # Get the ID of the task list associated with the current item
+            task_list_id = current_item.data(Qt.UserRole)
+        else:
+            task_list_id = self.task_list_sidebar.current_tasklist_id
         # Refresh the tasks associated with this task list
         self.task_list_sidebar.load_tasks_by_task_list(task_list_id)
         self.reset_cursor()
