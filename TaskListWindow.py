@@ -4,7 +4,15 @@ from motivation import get_motivational_phrase
 from stylesheet import UI_STYLESHEET
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QAction, QGuiApplication, QIcon, QPixmap
+from PySide6.QtGui import (
+    QAction,
+    QGuiApplication,
+    QIcon,
+    QPixmap,
+    QPainter,
+    QBrush,
+    QPen,
+)
 from PySide6.QtWidgets import (
     QApplication,
     QDialog,
@@ -140,8 +148,33 @@ class TaskListWindow(QMainWindow):
 
         pixmap = QPixmap()
         pixmap.loadFromData(image_data)
+
+        # Create a circular mask
+        mask = QPixmap(pixmap.size())
+        mask.fill(Qt.transparent)
+        painter = QPainter(mask)
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setBrush(QBrush(Qt.white))
+        painter.setPen(Qt.NoPen)
+        painter.drawEllipse(0, 0, pixmap.width(), pixmap.height())
+        painter.end()
+
+        # Apply the mask to the pixmap
+        pixmap.setMask(mask.mask())
+
         self.user_avatar_label.setPixmap(
-            pixmap.scaled(50, 50, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            pixmap.scaled(46, 46, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        )
+        self.user_avatar_label.setFixedSize(
+            54, 54
+        )  # Ensure the label is a square and accounts for the border
+        self.user_avatar_label.setStyleSheet(
+            """
+            QLabel#userAvatar {
+                border: 4px solid #1E90FF;  # Increase border thickness
+                border-radius: 27px; /* Half of the size to make it circular */
+            }
+            """
         )
 
         self.user_name_label = QLabel(user_info["name"])
