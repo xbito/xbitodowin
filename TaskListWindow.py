@@ -29,6 +29,7 @@ from PySide6.QtWidgets import (
     QRadioButton,
     QButtonGroup,
     QPushButton,
+    QSizePolicy,
 )
 from google.auth.exceptions import RefreshError
 from google.auth.transport.requests import Request
@@ -113,8 +114,8 @@ class TaskListWindow(QMainWindow):
         self.setWindowIcon(QIcon("output.ico.32x32.png"))
         # Initialize the main layout
         self.center_window()
-        self.create_sidebar()
         self.create_filter_group_box()
+        self.create_sidebar()
         self.create_main_layout()
         self.create_search_bar()
         self.create_task_table()
@@ -178,11 +179,29 @@ class TaskListWindow(QMainWindow):
         )
 
         self.user_name_label = QLabel(user_info["name"])
+        self.user_name_label.setStyleSheet("font-size: 14px;")
+        self.user_name_label.setWordWrap(False)
+        self.user_name_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        self.user_name_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.user_name_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.user_name_label.setToolTip(user_info["name"])  # Show full name on hover
 
         # Create a layout for the user info
-        self.user_info_layout = QVBoxLayout()
+        self.user_info_layout = QHBoxLayout()
         self.user_info_layout.addWidget(self.user_avatar_label)
         self.user_info_layout.addWidget(self.user_name_label)
+        self.user_info_layout.setSpacing(10)  # Add spacing between avatar and name
+        self.user_info_layout.addStretch()  # Push the name to the left
+
+        # Create a vertical layout for the sidebar
+        sidebar_layout = QVBoxLayout()
+        sidebar_layout.addLayout(self.user_info_layout)
+        sidebar_layout.addWidget(self.filter_group_box)
+        sidebar_layout.addWidget(self.task_list_sidebar)
+
+        # Create a widget for the sidebar and set the layout
+        self.sidebar_widget = QWidget()
+        self.sidebar_widget.setLayout(sidebar_layout)
 
         # Connect the currentItemChanged signal to the uncheck_radio_buttons method
         self.task_list_sidebar.currentItemChanged.connect(self.uncheck_radio_buttons)
@@ -247,15 +266,6 @@ class TaskListWindow(QMainWindow):
         self.main_layout.addWidget(self.task_table)
 
     def create_horizontal_layout(self):
-        # Create a vertical layout for the sidebar and filter group box
-        sidebar_layout = QVBoxLayout()
-        sidebar_layout.addLayout(self.user_info_layout)
-        sidebar_layout.addWidget(self.filter_group_box)
-        sidebar_layout.addWidget(self.task_list_sidebar)
-
-        # Create a widget for the sidebar and set the layout
-        self.sidebar_widget = QWidget()
-        self.sidebar_widget.setLayout(sidebar_layout)
         # Create a horizontal layout for the sidebar and main content
         horizontal_layout = QHBoxLayout()
         horizontal_layout.addWidget(self.sidebar_widget)
