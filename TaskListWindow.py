@@ -224,17 +224,23 @@ class TaskListWindow(QMainWindow):
         self.next_days_radio_button = QRadioButton("Next Days")
         self.overdue_radio_button = QRadioButton("Overdue")
         self.recently_completed_radio_button = QRadioButton("Recently completed")
+        self.all_radio_button = QRadioButton("All")  # Add new radio button
+
         # Connect the toggled signal to the filter_tasks method
         self.today_radio_button.toggled.connect(self.filter_tasks)
         self.next_days_radio_button.toggled.connect(self.filter_tasks)
         self.overdue_radio_button.toggled.connect(self.filter_tasks)
         self.recently_completed_radio_button.toggled.connect(self.filter_tasks)
+        self.all_radio_button.toggled.connect(self.filter_tasks)  # Add new connection
         # Create a button group for the radio buttons
         self.radio_button_group = QButtonGroup()
         self.radio_button_group.addButton(self.today_radio_button)
         self.radio_button_group.addButton(self.next_days_radio_button)
         self.radio_button_group.addButton(self.overdue_radio_button)
         self.radio_button_group.addButton(self.recently_completed_radio_button)
+        self.radio_button_group.addButton(
+            self.all_radio_button
+        )  # Add new button to group
         # Connect the buttonClicked signal to the deselect_task_list method
         self.radio_button_group.buttonClicked.connect(self.deselect_task_list)
 
@@ -243,6 +249,7 @@ class TaskListWindow(QMainWindow):
         self.filter_layout.addWidget(self.next_days_radio_button)
         self.filter_layout.addWidget(self.overdue_radio_button)
         self.filter_layout.addWidget(self.recently_completed_radio_button)
+        self.filter_layout.addWidget(self.all_radio_button)  # Add new button to layout
 
     def create_main_layout(self):
         # Create a main layout for the content
@@ -396,7 +403,9 @@ class TaskListWindow(QMainWindow):
                 ["Title", "Updated", "Due Date", "Notes", "Priority"]
             )
         # Filter tasks based on the selected filter
-        if self.today_radio_button.isChecked():
+        if self.all_radio_button.isChecked():  # Add new condition for All filter
+            filtered_tasks = all_tasks  # Show all tasks without filtering
+        elif self.today_radio_button.isChecked():
             filtered_tasks = [
                 task
                 for task in all_tasks
@@ -422,7 +431,8 @@ class TaskListWindow(QMainWindow):
             ]
             pass
         elif (
-            not self.today_radio_button.isChecked()
+            not self.all_radio_button.isChecked()  # Add new button to check
+            and not self.today_radio_button.isChecked()
             and not self.next_days_radio_button.isChecked()
             and not self.overdue_radio_button.isChecked()
             and not self.recently_completed_radio_button.isChecked()
