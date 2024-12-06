@@ -48,6 +48,7 @@ QTableWidget {
     color: #FFFFFF;
     border: 1px solid #444444;
     border-radius: 5px;
+    background-color: #3E3E3E;
 }
 QTableWidget::item {
     border: none;
@@ -93,22 +94,6 @@ QScrollBar::handle:vertical {
 }
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
     height: 0px;
-}
-QTableWidget {
-    border: 1px solid #444444;
-    border-radius: 5px;
-    background-color: #3E3E3E;
-    color: #FFFFFF;
-}
-QTableWidget QHeaderView::section {
-    background-color: #2E2E2E;
-    padding: 5px;
-    border: 1px solid #444444;
-    color: #FFFFFF;
-}
-QTableWidget QTableCornerButton::section {
-    background-color: #2E2E2E;
-    border: 1px solid #444444;
 }
 TaskListSidebar {
     border: 1px solid #444444;

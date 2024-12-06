@@ -1,8 +1,13 @@
-from TaskListSidebar import TaskListSidebar
-from exports import export_tasks_to_csv, export_tasks_to_excel, export_tasks_to_gsheet
-from motivation import get_motivational_phrase
-from stylesheet import UI_STYLESHEET
+# Standard library imports
+import os
+import webbrowser
+from datetime import datetime, timedelta
+from concurrent.futures import ThreadPoolExecutor
+from typing import Optional, List, Dict, Any
 
+# Third-party imports
+import pytz
+import requests
 from PySide6.QtCore import Qt
 from PySide6.QtGui import (
     QAction,
@@ -40,12 +45,11 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-import os
-import webbrowser
-import requests
-from datetime import datetime, timedelta
-import pytz
-from concurrent.futures import ThreadPoolExecutor
+# Local imports
+from TaskListSidebar import TaskListSidebar
+from exports import export_tasks_to_csv, export_tasks_to_excel, export_tasks_to_gsheet
+from motivation import get_motivational_phrase
+from stylesheet import UI_STYLESHEET
 
 SCOPES = [
     "https://www.googleapis.com/auth/tasks.readonly",
@@ -132,7 +136,8 @@ class TaskListWindow(QMainWindow):
         # Set a flat stylesheet for the window
         self.setStyleSheet(UI_STYLESHEET)
 
-    def center_window(self):
+    def center_window(self) -> None:
+        """Centers the window on the primary screen."""
         # Get the resolution of the screen
         screenRect = QGuiApplication.primaryScreen().availableGeometry()
         # Calculate the center position of the screen
@@ -259,31 +264,31 @@ class TaskListWindow(QMainWindow):
         self.search_bar.textChanged.connect(self.search_tasks)
         self.main_layout.addWidget(self.search_bar)
 
-    def create_task_table(self):
+    def create_task_table(self) -> None:
+        """Creates and configures the main task table widget."""
         self.task_table = QTableWidget()
         self.task_table.setRowCount(0)
         self.task_table.setColumnCount(5)
-        self.task_table.setHorizontalHeaderLabels(
-            ["Title", "Updated", "Due Date", "Notes", "Priority"]
-        )
 
-        # Enable alternating row colors
+        # Column configuration
+        headers = ["Title", "Updated", "Due Date", "Notes", "Priority"]
+        self.task_table.setHorizontalHeaderLabels(headers)
         self.task_table.setAlternatingRowColors(True)
 
-        # Make headers stretch to fill available space
+        # Header configuration
+        self._configure_table_headers()
+
+        self.task_table.cellClicked.connect(self.handle_title_click)
+        self.main_layout.addWidget(self.task_table)
+
+    def _configure_table_headers(self) -> None:
+        """Configures the table headers and sizing."""
         header = self.task_table.horizontalHeader()
         header.setStretchLastSection(True)
         header.setSectionResizeMode(0, QHeaderView.Stretch)
 
-        # Style vertical header (row numbers)
         vertical_header = self.task_table.verticalHeader()
-        vertical_header.setDefaultSectionSize(30)  # Adjust row height
-
-        # Connect the cellClicked signal
-        self.task_table.cellClicked.connect(self.handle_title_click)
-
-        # Add the table to the main layout
-        self.main_layout.addWidget(self.task_table)
+        vertical_header.setDefaultSectionSize(30)
 
     def create_horizontal_layout(self):
         # Create a horizontal layout for the sidebar and main content
@@ -495,12 +500,12 @@ class TaskListWindow(QMainWindow):
             2, Qt.AscendingOrder if ascending else Qt.DescendingOrder
         )
 
-    def refresh_tasks(self, current_item=None):
+    def refresh_tasks(self, current_item: Optional[QListWidgetItem] = None) -> None:
         """
         Refreshes the tasks associated with the currently selected task list.
 
         Args:
-            current_item (QListWidgetItem): The currently selected item.
+            current_item (Optional[QListWidgetItem]): The currently selected item
         """
         self.set_waiting_cursor()
         if current_item:
@@ -566,7 +571,13 @@ class TaskListWindow(QMainWindow):
             self.about_popup.close()
             self.about_popup = None
 
-    def show_notes(self, task_notes):
+    def show_notes(self, task_notes: str) -> None:
+        """
+        Shows a dialog with the task notes.
+
+        Args:
+            task_notes (str): The notes to display
+        """
         # Create a new window to display the notes
         notes_dialog = QDialog()
         notes_dialog.setWindowTitle("Task Notes")
@@ -622,8 +633,13 @@ class TaskListWindow(QMainWindow):
             if not page_token:
                 break
 
-    def fetch_non_completed_tasks(self):
-        """Fetch non-completed tasks from all task lists."""
+    def fetch_non_completed_tasks(self) -> List[Dict[str, Any]]:
+        """
+        Fetches all non-completed tasks from all task lists.
+
+        Returns:
+            List[Dict[str, Any]]: A list of task dictionaries containing task details
+        """
         print("Fetching non-completed tasks...")
         all_tasks = []
         task_lists = self.service.tasklists().list().execute().get("items", [])
@@ -677,8 +693,16 @@ class TaskListWindow(QMainWindow):
         print(f"Total non-completed tasks fetched: {len(all_tasks)}")
         return all_tasks
 
-    def fetch_all_tasks(self, completed=False):
-        """Fetch all tasks from all task lists."""
+    def fetch_all_tasks(self, completed: bool = False) -> List[Dict[str, Any]]:
+        """
+        Fetches all tasks from all task lists.
+
+        Args:
+            completed (bool): If True, fetches only completed tasks from the last week
+
+        Returns:
+            List[Dict[str, Any]]: A list of task dictionaries containing task details
+        """
         print("Fetching all tasks...")
         all_tasks = []
         task_lists = self.service.tasklists().list().execute().get("items", [])
@@ -762,8 +786,15 @@ class TaskListWindow(QMainWindow):
     def reset_cursor(self):
         QApplication.restoreOverrideCursor()
 
-    def apply_shadow(self, widget, radius=8, offset=2):
-        """Helper method to apply drop shadow to widgets"""
+    def apply_shadow(self, widget: QWidget, radius: int = 8, offset: int = 2) -> None:
+        """
+        Applies a drop shadow effect to a widget.
+
+        Args:
+            widget (QWidget): The widget to apply the shadow to
+            radius (int): The blur radius of the shadow
+            offset (int): The vertical offset of the shadow
+        """
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(radius)
         shadow.setXOffset(0)
