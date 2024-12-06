@@ -44,6 +44,59 @@ QLineEdit {
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.15);
 }
 QTableWidget {
+    background-color: #2E2E2E;
+    alternate-background-color: #333333;
+    gridline-color: #444444;
+    color: #FFFFFF;
+    border: 1px solid #444444;
+    border-radius: 5px;
+}
+QTableWidget::item {
+    border: none;
+    padding: 5px;
+}
+QTableWidget::item:selected {
+    background-color: #1E90FF;
+    color: #FFFFFF;
+}
+QHeaderView {
+    background-color: #2E2E2E;
+    border: none;
+}
+QHeaderView::section {
+    background-color: #2E2E2E;
+    color: #FFFFFF;
+    padding: 5px;
+    border: none;
+    border-right: 1px solid #444444;
+    border-bottom: 1px solid #444444;
+}
+QHeaderView::section:horizontal {
+    border-bottom: 1px solid #444444;
+}
+QHeaderView::section:vertical {
+    border-right: 1px solid #444444;
+}
+QTableCornerButton::section {
+    background-color: #2E2E2E;
+    border: none;
+    border-right: 1px solid #444444;
+    border-bottom: 1px solid #444444;
+}
+QScrollBar:vertical {
+    background-color: #2E2E2E;
+    width: 12px;
+    border: none;
+}
+QScrollBar::handle:vertical {
+    background-color: #444444;
+    border-radius: 6px;
+    min-height: 20px;
+}
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0px;
+}
+QTableWidget {
     border: 1px solid #444444;
     border-radius: 5px;
     background-color: #3E3E3E;

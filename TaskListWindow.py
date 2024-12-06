@@ -30,6 +30,7 @@ from PySide6.QtWidgets import (
     QButtonGroup,
     QPushButton,
     QSizePolicy,
+    QHeaderView,
 )
 from google.auth.exceptions import RefreshError
 from google.auth.transport.requests import Request
@@ -269,8 +270,22 @@ class TaskListWindow(QMainWindow):
         self.task_table.setHorizontalHeaderLabels(
             ["Title", "Updated", "Due Date", "Notes", "Priority"]
         )
-        # Connect the cellClicked signal to the handle_title_click method
+
+        # Enable alternating row colors
+        self.task_table.setAlternatingRowColors(True)
+
+        # Make headers stretch to fill available space
+        header = self.task_table.horizontalHeader()
+        header.setStretchLastSection(True)
+        header.setSectionResizeMode(0, QHeaderView.Stretch)
+
+        # Style vertical header (row numbers)
+        vertical_header = self.task_table.verticalHeader()
+        vertical_header.setDefaultSectionSize(30)  # Adjust row height
+
+        # Connect the cellClicked signal
         self.task_table.cellClicked.connect(self.handle_title_click)
+
         # Add the table to the main layout
         self.main_layout.addWidget(self.task_table)
 
