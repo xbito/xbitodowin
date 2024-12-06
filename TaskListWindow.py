@@ -175,17 +175,10 @@ class TaskListWindow(QMainWindow):
         self.user_avatar_label.setFixedSize(
             54, 54
         )  # Ensure the label is a square and accounts for the border
-        self.user_avatar_label.setStyleSheet(
-            """
-            QLabel#userAvatar {
-                border: 4px solid #1E90FF;  # Increase border thickness
-                border-radius: 27px; /* Half of the size to make it circular */
-            }
-            """
-        )
+        self.user_avatar_label.setStyleSheet("")  # Remove inline style
 
         self.user_name_label = QLabel(user_info["name"])
-        self.user_name_label.setStyleSheet("font-size: 14px;")
+        self.user_name_label.setObjectName("userName")  # Add object name for styling
         self.user_name_label.setWordWrap(False)
         self.user_name_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         self.user_name_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
@@ -318,12 +311,10 @@ class TaskListWindow(QMainWindow):
 
     def show_motivational_phrase(self):
         self.phrase = get_motivational_phrase()
-        # Display the Phrase at the top of the UI
         self.motivational_phrase_label = QLabel(self.phrase)
         self.motivational_phrase_label.setAlignment(Qt.AlignCenter)
-        self.motivational_phrase_label.setStyleSheet(
-            "font-size: 16px; font-weight: bold;"
-        )
+        # Remove inline style, using id selector instead
+        self.motivational_phrase_label.setObjectName("motivationalPhrase")
         self.central_widget.layout().insertWidget(0, self.motivational_phrase_label)
 
     def resizeEvent(self, event):
@@ -552,19 +543,8 @@ class TaskListWindow(QMainWindow):
     def create_refresh_button(self):
         self.refresh_button = QPushButton("Refresh")
         self.refresh_button.setEnabled(False)
-        self.refresh_button.setStyleSheet(
-            """
-            QPushButton {
-                border-radius: 10px;
-                padding: 5px;
-                background-color: #1E90FF;
-                color: #FFFFFF;
-            }
-            QPushButton:disabled {
-                background-color: #A9A9A9;
-            }
-            """
-        )
+        # Remove inline style, using id selector instead
+        self.refresh_button.setObjectName("refreshButton")
         self.refresh_button.clicked.connect(self.refresh_tasks)
         self.main_layout.addWidget(self.refresh_button)
 

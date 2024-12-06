@@ -124,9 +124,25 @@ TaskListSidebar::item:selected {
     color: #FFFFFF;
 }
 QLabel#userAvatar {
-    border: 2px solid #1E90FF;
-    border-radius: 25px; /* Assuming the avatar is 50x50 pixels */
+    border: 4px solid #1E90FF;
+    border-radius: 27px;
     width: 50px;
     height: 50px;
+}
+QPushButton#refreshButton {
+    border-radius: 10px;
+    padding: 5px;
+    background-color: #1E90FF;
+    color: #FFFFFF;
+}
+QPushButton#refreshButton:disabled {
+    background-color: #A9A9A9;
+}
+QLabel#motivationalPhrase {
+    font-size: 16px;
+    font-weight: bold;
+}
+QLabel#userName {
+    font-size: 14px;
 }
 """
