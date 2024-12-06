@@ -42,6 +42,7 @@ import webbrowser
 import requests
 from datetime import datetime, timedelta
 import pytz
+from concurrent.futures import ThreadPoolExecutor
 
 SCOPES = [
     "https://www.googleapis.com/auth/tasks.readonly",
@@ -55,6 +56,7 @@ SCOPES = [
 class TaskListWindow(QMainWindow):
     def __init__(self, app):
         self.app = app
+        self.is_fetching_tasks = False  # Add a flag to track task fetching
         # Load Google Tasks API
         if os.path.exists("credentials/token.json"):
             self.creds = Credentials.from_authorized_user_file(
@@ -365,6 +367,11 @@ class TaskListWindow(QMainWindow):
         """
         Filters the tasks based on the selected filter.
         """
+        if self.is_fetching_tasks:
+            print("Task fetching is already in progress. Skipping this request.")
+            return
+
+        self.is_fetching_tasks = True
         self.set_waiting_cursor()
         # Get the current date in the user's timezone
         user_tz = pytz.timezone("America/New_York")  # Replace with your timezone
@@ -422,6 +429,7 @@ class TaskListWindow(QMainWindow):
         ):
             # If no radio button is checked, do nothing
             self.reset_cursor()
+            self.is_fetching_tasks = False
             return
 
         self.task_list_sidebar.render_tasks(filtered_tasks)
@@ -440,6 +448,7 @@ class TaskListWindow(QMainWindow):
             self.order_tasks_by_completed_date(ascending=False)
 
         self.reset_cursor()
+        self.is_fetching_tasks = False
 
     def order_tasks_by_due_date(self, ascending):
         # Implement logic to order tasks by due date
@@ -606,75 +615,110 @@ class TaskListWindow(QMainWindow):
                 break
 
     def fetch_non_completed_tasks(self):
-        try:
-            tasklists = self.service.tasklists().list().execute()
-            all_tasks = []
-            for tasklist in tasklists["items"]:
-                # Initial call to fetch the first page of tasks
-                request = self.service.tasks().list(tasklist=tasklist["id"])
-                while request:
-                    tasks_response = request.execute()
+        """Fetch non-completed tasks from all task lists."""
+        print("Fetching non-completed tasks...")
+        all_tasks = []
+        task_lists = self.service.tasklists().list().execute().get("items", [])
+
+        def fetch_non_completed_tasks_for_list(task_list):
+            tasks = []
+            page_token = None
+            while True:
+                try:
+                    response = (
+                        self.service.tasks()
+                        .list(tasklist=task_list["id"], pageToken=page_token)
+                        .execute()
+                    )
                     non_completed_tasks = [
                         {
-                            "tasklist_name": tasklist[
-                                "title"
-                            ],  # Include the task list name
+                            "tasklist_name": task_list["title"],
                             "id": task["id"],
                             "title": task["title"],
                             "updated": task["updated"],
                             "due": task["due"] if "due" in task else "",
                             "status": task["status"],
                             "notes": task.get("notes"),
-                            "webViewLink": (
-                                task["webViewLink"] if "webViewLink" in task else ""
-                            ),
+                            "webViewLink": task.get("webViewLink", ""),
                         }
-                        for task in tasks_response.get("items", [])
+                        for task in response.get("items", [])
                         if task["status"] != "completed"
                     ]
-                    all_tasks.extend(non_completed_tasks)
-                    # Get the next page token and make the next request
-                    request = self.service.tasks().list_next(
-                        previous_request=request, previous_response=tasks_response
+                    tasks.extend(non_completed_tasks)
+                    page_token = response.get("nextPageToken")
+                    if not page_token:
+                        break
+                except Exception as e:
+                    print(
+                        f"Error fetching non-completed tasks for list {task_list['title']}: {e}"
                     )
+                    break
+            return tasks
 
-            return all_tasks
-        except Exception as e:
-            print("Failed to fetch tasks:", e)
-            return []
+        with ThreadPoolExecutor(max_workers=1) as executor:  # Use a single thread
+            futures = [
+                executor.submit(fetch_non_completed_tasks_for_list, task_list)
+                for task_list in task_lists
+            ]
+            for future in futures:
+                try:
+                    all_tasks.extend(future.result())
+                except Exception as e:
+                    print(f"Error in future result: {e}")
+
+        print(f"Total non-completed tasks fetched: {len(all_tasks)}")
+        return all_tasks
 
     def fetch_all_tasks(self, completed=False):
         """Fetch all tasks from all task lists."""
+        print("Fetching all tasks...")
         all_tasks = []
         task_lists = self.service.tasklists().list().execute().get("items", [])
-        for task_list in task_lists:
+
+        def fetch_tasks_for_list(task_list):
+            tasks = []
             page_token = None
             while True:
-                if completed:
-                    one_week_ago = datetime.now() - timedelta(days=7)
-                    one_week_ago_rfc3339 = one_week_ago.isoformat() + "Z"
-                    response = (
-                        self.service.tasks()
-                        .list(
-                            tasklist=task_list["id"],
-                            showHidden=True,
-                            completedMin=one_week_ago_rfc3339,
-                            pageToken=page_token,
+                try:
+                    if completed:
+                        one_week_ago = datetime.now() - timedelta(days=7)
+                        one_week_ago_rfc3339 = one_week_ago.isoformat() + "Z"
+                        response = (
+                            self.service.tasks()
+                            .list(
+                                tasklist=task_list["id"],
+                                showHidden=True,
+                                completedMin=one_week_ago_rfc3339,
+                                pageToken=page_token,
+                            )
+                            .execute()
                         )
-                        .execute()
-                    )
-                else:
-                    response = (
-                        self.service.tasks()
-                        .list(tasklist=task_list["id"], pageToken=page_token)
-                        .execute()
-                    )
-                tasks = response.get("items", [])
-                print(f"Fetched {len(tasks)} tasks for task list {task_list['title']}")
-                all_tasks.extend(tasks)
-                page_token = response.get("nextPageToken")
-                if not page_token:
+                    else:
+                        response = (
+                            self.service.tasks()
+                            .list(tasklist=task_list["id"], pageToken=page_token)
+                            .execute()
+                        )
+                    tasks.extend(response.get("items", []))
+                    page_token = response.get("nextPageToken")
+                    if not page_token:
+                        break
+                except Exception as e:
+                    print(f"Error fetching tasks for list {task_list['title']}: {e}")
                     break
+            return tasks
+
+        with ThreadPoolExecutor(max_workers=1) as executor:  # Use a single thread
+            futures = [
+                executor.submit(fetch_tasks_for_list, task_list)
+                for task_list in task_lists
+            ]
+            for future in futures:
+                try:
+                    all_tasks.extend(future.result())
+                except Exception as e:
+                    print(f"Error in future result: {e}")
+
         print(f"Total tasks fetched: {len(all_tasks)}")
         return all_tasks
 
