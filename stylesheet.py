@@ -8,7 +8,6 @@ QGroupBox {
     border-radius: 5px;
     margin-top: 0.5em;
     background-color: #3E3E3E;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.15);
 }
 QGroupBox::title {
     subcontrol-origin: margin;
@@ -41,7 +40,6 @@ QLineEdit {
     padding: 5px;
     background-color: #3E3E3E;
     color: #FFFFFF;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.15);
 }
 QTableWidget {
     background-color: #2E2E2E;
@@ -101,13 +99,11 @@ QTableWidget {
     border-radius: 5px;
     background-color: #3E3E3E;
     color: #FFFFFF;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.15);
 }
 QTableWidget QHeaderView::section {
     background-color: #2E2E2E;
     padding: 5px;
     border: 1px solid #444444;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.15);
     color: #FFFFFF;
 }
 QTableWidget QTableCornerButton::section {
@@ -119,7 +115,6 @@ TaskListSidebar {
     border-radius: 5px;
     background-color: #3E3E3E;
     color: #FFFFFF;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.15);
 }
 TaskListSidebar::item {
     padding: 5px;

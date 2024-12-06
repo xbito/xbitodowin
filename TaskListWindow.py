@@ -12,6 +12,7 @@ from PySide6.QtGui import (
     QPainter,
     QBrush,
     QPen,
+    QColor,
 )
 from PySide6.QtWidgets import (
     QApplication,
@@ -31,6 +32,7 @@ from PySide6.QtWidgets import (
     QPushButton,
     QSizePolicy,
     QHeaderView,
+    QGraphicsDropShadowEffect,
 )
 from google.auth.exceptions import RefreshError
 from google.auth.transport.requests import Request
@@ -93,6 +95,7 @@ class TaskListWindow(QMainWindow):
         super().__init__()
         self.about_popup = None
         self.initUI()
+        self.apply_shadows()  # Add this line
 
     def get_user_info(self):
         user_info = self.profile_service.userinfo().get().execute()
@@ -778,3 +781,24 @@ class TaskListWindow(QMainWindow):
 
     def reset_cursor(self):
         QApplication.restoreOverrideCursor()
+
+    def apply_shadow(self, widget, radius=8, offset=2):
+        """Helper method to apply drop shadow to widgets"""
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(radius)
+        shadow.setXOffset(0)
+        shadow.setYOffset(offset)
+        shadow.setColor(QColor(0, 0, 0, 80))
+        widget.setGraphicsEffect(shadow)
+
+    def apply_shadows(self):
+        """Apply shadows to all widgets that need them"""
+        # Apply shadows to main UI elements
+        self.apply_shadow(self.filter_group_box)
+        self.apply_shadow(self.search_bar)
+        self.apply_shadow(self.task_table)
+        self.apply_shadow(self.task_list_sidebar)
+        self.apply_shadow(self.sidebar_widget)
+
+        # Reduce shadow size for smaller elements
+        self.apply_shadow(self.refresh_button, radius=4, offset=1)
