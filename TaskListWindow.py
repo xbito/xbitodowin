@@ -268,10 +268,15 @@ class TaskListWindow(QMainWindow):
         """Creates and configures the main task table widget."""
         self.task_table = QTableWidget()
         self.task_table.setRowCount(0)
-        self.task_table.setColumnCount(5)
+        self.task_table.setColumnCount(4)  # Change from 5 to 4 columns
 
         # Column configuration
-        headers = ["Title", "Updated", "Due Date", "Notes", "Priority"]
+        headers = [
+            "Title",
+            "Updated",
+            "Due Date",
+            "Notes",
+        ]  # Remove "Priority" from headers
         self.task_table.setHorizontalHeaderLabels(headers)
         self.task_table.setAlternatingRowColors(True)
 
@@ -664,6 +669,7 @@ class TaskListWindow(QMainWindow):
                             "status": task["status"],
                             "notes": task.get("notes"),
                             "webViewLink": task.get("webViewLink", ""),
+                            "task_list_id": task_list["id"],  # Add this line
                         }
                         for task in response.get("items", [])
                         if task["status"] != "completed"
@@ -812,4 +818,5 @@ class TaskListWindow(QMainWindow):
         self.apply_shadow(self.sidebar_widget)
 
         # Reduce shadow size for smaller elements
+        self.apply_shadow(self.refresh_button, radius=4, offset=1)
         self.apply_shadow(self.refresh_button, radius=4, offset=1)
