@@ -199,6 +199,7 @@ class TaskListWindow(QMainWindow):
 
         # Create a vertical layout for the sidebar
         sidebar_layout = QVBoxLayout()
+        sidebar_layout.setAlignment(Qt.AlignTop)
         sidebar_layout.addLayout(self.user_info_layout)
         sidebar_layout.addWidget(self.filter_group_box)
         sidebar_layout.addWidget(self.task_list_sidebar)
@@ -206,6 +207,15 @@ class TaskListWindow(QMainWindow):
         # Create a widget for the sidebar and set the layout
         self.sidebar_widget = QWidget()
         self.sidebar_widget.setLayout(sidebar_layout)
+
+        self.filter_group_box.setStyleSheet(
+            "QGroupBox { border: 1px solid #ccc; border-radius: 4px; }"
+        )
+        self.filter_group_box.setFixedWidth(220)
+        self.task_list_sidebar.setStyleSheet(
+            "border: 1px solid #ccc; border-radius: 4px;"
+        )
+        self.task_list_sidebar.setFixedWidth(220)
 
         # Connect the currentItemChanged signal to the uncheck_radio_buttons method
         self.task_list_sidebar.currentItemChanged.connect(self.uncheck_radio_buttons)
