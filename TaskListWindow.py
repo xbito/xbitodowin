@@ -104,7 +104,6 @@ class TaskListWindow(QMainWindow):
         # Load User Profile API
         self.profile_service = build("oauth2", "v2", credentials=self.creds)
         super().__init__()
-        self.about_popup = None
         self.initUI()
         self.apply_shadows()  # Add this line
 
@@ -553,49 +552,6 @@ class TaskListWindow(QMainWindow):
         self.refresh_button.setObjectName("refreshButton")
         self.refresh_button.clicked.connect(self.refresh_tasks)
         self.main_layout.addWidget(self.refresh_button)
-
-    def show_about_popup(self):
-        if self.about_popup is not None:
-            self.about_popup.close()
-        self.about_popup = QWidget()
-        self.about_popup.setWindowTitle("About")
-        self.about_popup.setGeometry(100, 100, 200, 100)
-        label_text = (
-            "Author: Fernando (Xbito) Gutierrez with multiple AIs: "
-            "Github Copilot, Llama, qwen, gpt, and Gemini"
-        )
-        label = QLabel(label_text)
-        self.about_popup.setLayout(QVBoxLayout())
-        self.about_popup.layout().addWidget(label)
-        self.about_popup.show()
-
-    def close_about_popup(self):
-        if self.about_popup is not None:
-            self.about_popup.close()
-            self.about_popup = None
-
-    def show_notes(self, task_notes: str) -> None:
-        """
-        Shows a dialog with the task notes.
-
-        Args:
-            task_notes (str): The notes to display
-        """
-        # Create a new window to display the notes
-        notes_dialog = QDialog()
-        notes_dialog.setWindowTitle("Task Notes")
-        # Add a text browser to display the notes
-        notes_browser = QTextBrowser(notes_dialog)
-        notes_browser.setReadOnly(True)
-        notes_browser.setText(task_notes)
-        # Get the size of the notes browser
-        browser_size = notes_browser.sizeHint()
-        # Resize the dialog to fit the notes browser
-        notes_dialog.resize(browser_size.width(), browser_size.height())
-        # Set the dialog to be modal (block until closed)
-        notes_dialog.setModal(True)
-        # Show the notes window
-        notes_dialog.exec_()
 
     def load_task_lists(self):
         """

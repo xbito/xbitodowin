@@ -1,6 +1,7 @@
 """Menu management for the Xbitodowin application."""
 
 from PySide6.QtGui import QAction
+from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout
 from exports import export_tasks_to_csv, export_tasks_to_excel, export_tasks_to_gsheet
 
 
@@ -16,6 +17,7 @@ class TaskListMenu:
         """
         self.window = window
         self.menu_bar = window.menuBar()
+        self.about_popup = None  # Added property for About popup
         self.create_menus()
 
     def create_menus(self):
@@ -27,7 +29,8 @@ class TaskListMenu:
         """Create the Help menu with About action."""
         help_menu = self.menu_bar.addMenu("Help")
         help_action = QAction("About", self.window)
-        help_action.triggered.connect(self.window.show_about_popup)
+        # Changed to connect self.show_about_popup instead of self.window.show_about_popup
+        help_action.triggered.connect(self.show_about_popup)
         help_menu.addAction(help_action)
 
     def _create_export_menu(self):
@@ -73,3 +76,25 @@ class TaskListMenu:
     def export_tasks_to_gsheet(self, tasks, service):
         """Export tasks to Google Sheets."""
         export_tasks_to_gsheet(tasks=tasks, service=service)
+
+    def show_about_popup(self):
+        """Show the About dialog."""
+        if self.about_popup is not None:
+            self.about_popup.close()
+        self.about_popup = QWidget()
+        self.about_popup.setWindowTitle("About")
+        self.about_popup.setGeometry(100, 100, 200, 100)
+        label_text = (
+            "Author: Fernando (Xbito) Gutierrez with multiple AIs: "
+            "Github Copilot, Llama, qwen, gpt, and Gemini"
+        )
+        label = QLabel(label_text)
+        self.about_popup.setLayout(QVBoxLayout())
+        self.about_popup.layout().addWidget(label)
+        self.about_popup.show()
+
+    def close_about_popup(self):
+        """Close the About dialog."""
+        if self.about_popup is not None:
+            self.about_popup.close()
+            self.about_popup = None
