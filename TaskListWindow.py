@@ -8,7 +8,7 @@ from typing import Optional, List, Dict, Any
 # Third-party imports
 import pytz
 import requests
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import (
     QGuiApplication,
     QIcon,
@@ -16,6 +16,7 @@ from PySide6.QtGui import (
     QPainter,
     QBrush,
     QColor,
+    QDesktopServices,
 )
 from PySide6.QtWidgets import (
     QApplication,
@@ -790,17 +791,23 @@ class TaskListWindow(QMainWindow):
         self.detail_due_field = QLineEdit()
         self.detail_updated_field = QLineEdit()
         self.detail_notes_field = QTextEdit()
-        self.detail_web_link_field = QLineEdit()
-        self.detail_web_link_field.setReadOnly(True)
+        self.detail_web_link_button = QPushButton("Open Web Link")
+        self.detail_web_link_button.setEnabled(False)
+        self.detail_web_link_button.clicked.connect(self.open_web_link)
 
         details_layout.addRow("Title:", self.detail_title_field)
         details_layout.addRow("Due:", self.detail_due_field)
         details_layout.addRow("Updated:", self.detail_updated_field)
         details_layout.addRow("Notes:", self.detail_notes_field)
-        details_layout.addRow("Web Link:", self.detail_web_link_field)
+        details_layout.addRow("Link:", self.detail_web_link_button)
 
         self.details_widget.setLayout(details_layout)
         self.details_widget.setVisible(False)  # Hide by default
+
+    def open_web_link(self):
+        """Open the current web link in the default browser."""
+        if hasattr(self, "current_web_link") and self.current_web_link:
+            QDesktopServices.openUrl(QUrl(self.current_web_link))
 
     def update_details_panel(self):
         """
@@ -832,7 +839,10 @@ class TaskListWindow(QMainWindow):
         # Update the fields
         self.detail_updated_field.setText(updated)
         self.detail_notes_field.setPlainText(notes or "")
-        self.detail_web_link_field.setText(web_link or "")
+
+        # Store the link and enable the button
+        self.current_web_link = web_link or ""
+        self.detail_web_link_button.setEnabled(bool(self.current_web_link))
 
         # Show due date or completion date based on status
         if status == "completed":
@@ -846,4 +856,5 @@ class TaskListWindow(QMainWindow):
         self.detail_due_field.clear()
         self.detail_updated_field.clear()
         self.detail_notes_field.clear()
-        self.detail_web_link_field.clear()
+        self.detail_web_link_button.setEnabled(False)
+        self.current_web_link = ""
