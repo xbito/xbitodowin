@@ -425,7 +425,12 @@ class TaskListWindow(QMainWindow):
             self.task_table.setHorizontalHeaderLabels(
                 ["Title", "Updated", "Completed", "Notes", "Priority"]
             )
-        else:
+        elif (
+            self.all_radio_button.isChecked()
+            or self.today_radio_button.isChecked()
+            or self.next_days_radio_button.isChecked()
+            or self.overdue_radio_button.isChecked()
+        ):
             all_tasks = self.fetch_all_tasks()
             # Reset table headers for other filters
             self.task_table.setHorizontalHeaderLabels(
