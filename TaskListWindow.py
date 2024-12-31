@@ -38,6 +38,8 @@ from PySide6.QtWidgets import (
     QSizePolicy,
     QHeaderView,
     QGraphicsDropShadowEffect,
+    QFormLayout,
+    QTextEdit,
 )
 from google.auth.exceptions import RefreshError
 from google.auth.transport.requests import Request
@@ -290,22 +292,14 @@ class TaskListWindow(QMainWindow):
         """Creates and configures the main task table widget."""
         self.task_table = QTableWidget()
         self.task_table.setRowCount(0)
-        self.task_table.setColumnCount(4)  # Change from 5 to 4 columns
-
-        # Column configuration
-        headers = [
-            "Title",
-            "Updated",
-            "Due Date",
-            "Notes",
-        ]  # Remove "Priority" from headers
+        # Only two columns now: Title and Due Date
+        self.task_table.setColumnCount(2)
+        headers = ["Title", "Due Date"]
         self.task_table.setHorizontalHeaderLabels(headers)
         self.task_table.setAlternatingRowColors(True)
-
-        # Header configuration
         self._configure_table_headers()
-
-        self.task_table.cellClicked.connect(self.handle_title_click)
+        # Connect selection change to update details panel
+        self.task_table.itemSelectionChanged.connect(self.update_details_panel)
         self.main_layout.addWidget(self.task_table)
 
     def _configure_table_headers(self) -> None:
@@ -318,11 +312,15 @@ class TaskListWindow(QMainWindow):
         vertical_header.setDefaultSectionSize(30)
 
     def create_horizontal_layout(self):
-        """Lay out the sidebar and the main vertical layout horizontally."""
+        """Lay out the sidebar, the main vertical layout, and the new details panel."""
         # Create a horizontal layout for the sidebar and main content
         horizontal_layout = QHBoxLayout()
         horizontal_layout.addWidget(self.sidebar_widget)
         horizontal_layout.addLayout(self.main_layout)
+
+        # Create the details panel and add it to the layout
+        self.create_details_panel()
+        horizontal_layout.addWidget(self.details_widget)
 
         # Create a central widget and set the main layout
         # Set the horizontal layout as the central widget
@@ -371,9 +369,7 @@ class TaskListWindow(QMainWindow):
         updated_width = int(remaining_width * 0.2)
 
         # Set the width for the Notes, Due Date, and Updated columns
-        self.task_table.setColumnWidth(1, updated_width)
-        self.task_table.setColumnWidth(2, due_date_width)
-        self.task_table.setColumnWidth(3, notes_width)
+        self.task_table.setColumnWidth(1, due_date_width)
 
         # Adjust the width of the sidebar and main content area
         sidebar_width = 200  # Set the desired width for the sidebar
@@ -820,6 +816,11 @@ class TaskListWindow(QMainWindow):
                 if web_view_link:
                     webbrowser.open(web_view_link)
 
+                # After fetching the web_view_link, store it so update_details_panel can display it
+                if web_view_link:
+                    # We'll encode the link in one of the data roles for the row.
+                    item.setData(Qt.UserRole + 4, web_view_link)
+
     def set_waiting_cursor(self):
         QApplication.setOverrideCursor(Qt.WaitCursor)
 
@@ -854,3 +855,59 @@ class TaskListWindow(QMainWindow):
         # Reduce shadow size for smaller elements
         self.apply_shadow(self.refresh_button, radius=4, offset=1)
         self.apply_shadow(self.refresh_button, radius=4, offset=1)
+
+    def create_details_panel(self):
+        """Create a panel on the right to display task details in editable fields."""
+        self.details_widget = QGroupBox("Task Details")
+        self.details_widget.setFixedWidth(280)
+        details_layout = QFormLayout()
+
+        self.detail_title_field = QLineEdit()
+        self.detail_due_field = QLineEdit()
+        self.detail_updated_field = QLineEdit()
+        self.detail_notes_field = QTextEdit()
+        self.detail_web_link_field = QLineEdit()
+        self.detail_web_link_field.setReadOnly(True)
+
+        details_layout.addRow("Title:", self.detail_title_field)
+        details_layout.addRow("Due:", self.detail_due_field)
+        details_layout.addRow("Updated:", self.detail_updated_field)
+        details_layout.addRow("Notes:", self.detail_notes_field)
+        details_layout.addRow("Web Link:", self.detail_web_link_field)
+
+        self.details_widget.setLayout(details_layout)
+
+    def update_details_panel(self):
+        """
+        Populate the details panel with data from the selected row.
+        If nothing is selected, clear the panel.
+        """
+        selected_items = self.task_table.selectedItems()
+        if not selected_items:
+            self.clear_details_panel()
+            return
+
+        row = selected_items[0].row()
+        title_item = self.task_table.item(row, 0)
+        if not title_item:
+            return
+
+        # Get all stored data from user roles
+        self.detail_title_field.setText(title_item.text())
+        updated = title_item.data(Qt.UserRole + 2)
+        notes = title_item.data(Qt.UserRole + 3)
+        web_link = title_item.data(Qt.UserRole + 4)
+        due_date = title_item.data(Qt.UserRole + 5)
+        completed_date = title_item.data(Qt.UserRole + 6)
+        status = title_item.data(Qt.UserRole + 7)
+
+        # Update the fields
+        self.detail_updated_field.setText(updated)
+        self.detail_notes_field.setPlainText(notes or "")
+        self.detail_web_link_field.setText(web_link or "")
+
+        # Show due date or completion date based on status
+        if status == "completed":
+            self.detail_due_field.setText(completed_date or "")
+        else:
+            self.detail_due_field.setText(due_date or "")

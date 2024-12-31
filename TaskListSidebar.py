@@ -54,63 +54,36 @@ class TaskListSidebar(QListWidget):
 
         :param tasks: List of task dictionaries to display.
         """
-        # Clear the table before loading new tasks
         self.window.task_table.setRowCount(0)
 
-        # Iterate through the tasks and add them to the table
         for task in tasks:
             row_position = self.window.task_table.rowCount()
             self.window.task_table.insertRow(row_position)
 
-            # Add title, updated, due date, and notes columns
-            title_item = QTableWidgetItem(task["title"])
+            # Title column (index 0)
+            title_item = QTableWidgetItem(task["title"] or "")
             self.window.task_table.setItem(row_position, 0, title_item)
 
-            # Store task data
+            # Store all task data in user roles
             title_item.setData(Qt.UserRole, task["id"])
             title_item.setData(Qt.UserRole + 1, task.get("task_list_id"))
+            title_item.setData(Qt.UserRole + 2, task.get("updated", ""))
+            title_item.setData(Qt.UserRole + 3, task.get("notes", ""))
+            title_item.setData(Qt.UserRole + 4, task.get("webViewLink", ""))
+            title_item.setData(Qt.UserRole + 5, task.get("due", ""))
+            title_item.setData(Qt.UserRole + 6, task.get("completed", ""))
+            title_item.setData(Qt.UserRole + 7, task.get("status", ""))
 
-            # Add updated timestamp
-            updated_datetime = datetime.datetime.fromisoformat(task["updated"])
-            updated_local_time = updated_datetime.astimezone()
-            updated_local_time_str = updated_local_time.strftime("%Y-%m-%d %H:%M:%S")
+            # Display date column (index 1)
+            display_date = ""
+            if task.get("status") == "completed" and "completed" in task:
+                display_date = task["completed"].split("T")[0]  # Just the date part
+            elif "updated" in task:
+                display_date = task["updated"].split("T")[0]  # Just the date part
+
             self.window.task_table.setItem(
-                row_position, 1, QTableWidgetItem(updated_local_time_str)
+                row_position, 1, QTableWidgetItem(display_date)
             )
-
-            # Add due date or completion date
-            if "status" in task and task["status"] == "completed":
-                completion_date = datetime.datetime.fromisoformat(task["completed"])
-                self.window.task_table.setItem(
-                    row_position,
-                    2,
-                    QTableWidgetItem(completion_date.strftime("%Y-%m-%d %H:%M:%S")),
-                )
-            elif "due" in task:
-                due_datetime = datetime.datetime.fromisoformat(task["due"])
-                due_local_time = due_datetime.astimezone()
-                due_local_time_str = due_local_time.strftime("%Y-%m-%d %H:%M:%S")
-                self.window.task_table.setItem(
-                    row_position, 2, QTableWidgetItem(due_local_time_str)
-                )
-            else:
-                self.window.task_table.setItem(row_position, 2, QTableWidgetItem(""))
-
-            # Add notes button if notes exist
-            task_notes = task.get("notes")
-            if task_notes:
-                notes_button = QPushButton("View More")
-                notes_button.clicked.connect(
-                    lambda checked, notes=task_notes: self.window.show_notes(notes)
-                )
-                self.window.task_table.setCellWidget(row_position, 3, notes_button)
-
-            # Add priority column
-            priority_item = QTableWidgetItem(task.get("priority", "None"))
-            self.window.task_table.setItem(row_position, 4, priority_item)
-            # Store the task ID as data for the item
-            item = self.window.task_table.item(row_position, 0)
-            item.setData(Qt.UserRole, task["id"])
 
     def load_tasks_by_task_list(self, item):
         """
