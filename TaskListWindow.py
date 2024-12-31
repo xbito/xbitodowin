@@ -844,16 +844,20 @@ class TaskListWindow(QMainWindow):
         details_layout.addRow("Web Link:", self.detail_web_link_field)
 
         self.details_widget.setLayout(details_layout)
+        self.details_widget.setVisible(False)  # Hide by default
 
     def update_details_panel(self):
         """
         Populate the details panel with data from the selected row.
-        If nothing is selected, clear the panel.
+        If nothing is selected, clear the panel and hide the panel.
         """
         selected_items = self.task_table.selectedItems()
         if not selected_items:
             self.clear_details_panel()
+            self.details_widget.hide()  # Hide when no task is selected
             return
+
+        self.details_widget.show()  # Show when a task is selected
 
         row = selected_items[0].row()
         title_item = self.task_table.item(row, 0)
@@ -879,3 +883,11 @@ class TaskListWindow(QMainWindow):
             self.detail_due_field.setText(completed_date or "")
         else:
             self.detail_due_field.setText(due_date or "")
+
+    def clear_details_panel(self):
+        """Clear all fields in the details panel."""
+        self.detail_title_field.clear()
+        self.detail_due_field.clear()
+        self.detail_updated_field.clear()
+        self.detail_notes_field.clear()
+        self.detail_web_link_field.clear()

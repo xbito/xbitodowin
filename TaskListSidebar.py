@@ -85,6 +85,8 @@ class TaskListSidebar(QListWidget):
                 row_position, 1, QTableWidgetItem(display_date)
             )
 
+        self.window.task_table.clearSelection()  # Clear table selection to hide details pane when none is selected
+
     def load_tasks_by_task_list(self, item):
         """
         Load tasks for the given item and render them.
