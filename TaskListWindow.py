@@ -20,7 +20,6 @@ from PySide6.QtGui import (
 )
 from PySide6.QtWidgets import (
     QApplication,
-    QDialog,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -290,7 +289,7 @@ class TaskListWindow(QMainWindow):
         self.task_table.setRowCount(0)
         # Only two columns now: Title and Due Date
         self.task_table.setColumnCount(2)
-        headers = ["Title", "Due Date"]
+        headers = ["Title", "Last Updated"]
         self.task_table.setHorizontalHeaderLabels(headers)
         self.task_table.setAlternatingRowColors(True)
         self._configure_table_headers()
@@ -784,20 +783,20 @@ class TaskListWindow(QMainWindow):
     def create_details_panel(self):
         """Create a panel on the right to display task details in editable fields."""
         self.details_widget = QGroupBox("Task Details")
-        self.details_widget.setFixedWidth(280)
+        self.details_widget.setFixedWidth(500)
         details_layout = QFormLayout()
 
         self.detail_title_field = QLineEdit()
-        self.detail_due_field = QLineEdit()
         self.detail_updated_field = QLineEdit()
+        self.detail_due_field = QLineEdit()
         self.detail_notes_field = QTextEdit()
         self.detail_web_link_button = QPushButton("Open Web Link")
         self.detail_web_link_button.setEnabled(False)
         self.detail_web_link_button.clicked.connect(self.open_web_link)
 
         details_layout.addRow("Title:", self.detail_title_field)
-        details_layout.addRow("Due:", self.detail_due_field)
         details_layout.addRow("Updated:", self.detail_updated_field)
+        details_layout.addRow("Due:", self.detail_due_field)
         details_layout.addRow("Notes:", self.detail_notes_field)
         details_layout.addRow("Link:", self.detail_web_link_button)
 
