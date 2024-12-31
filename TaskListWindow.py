@@ -61,7 +61,14 @@ SCOPES = [
 
 
 class TaskListWindow(QMainWindow):
+    """Main window to display and manage user tasks."""
+
     def __init__(self, app):
+        """
+        Initialize the TaskListWindow.
+
+        :param app: The QApplication reference.
+        """
         self.app = app
         self.is_fetching_tasks = False  # Add a flag to track task fetching
         # Load Google Tasks API
@@ -147,6 +154,7 @@ class TaskListWindow(QMainWindow):
         self.setGeometry(centerPositionX, centerPositionY, 1280, 800)
 
     def create_sidebar(self):
+        """Create the sidebar layout which includes the user info and task list."""
         # Create a sidebar for task lists
         self.task_list_sidebar = TaskListSidebar(window=self)
         # Fetch user info, email
@@ -223,6 +231,7 @@ class TaskListWindow(QMainWindow):
         self.task_list_sidebar.currentItemChanged.connect(self.refresh_tasks)
 
     def create_filter_group_box(self):
+        """Create and configure a group box containing radio buttons for filtering."""
         # Create a group box for filter options
         self.filter_group_box = QGroupBox("Filter tasks")
         self.filter_layout = QVBoxLayout()
@@ -231,6 +240,7 @@ class TaskListWindow(QMainWindow):
         self.filter_group_box.setLayout(self.filter_layout)
 
     def create_radio_buttons(self):
+        """Create and connect radio buttons for different filtering modes."""
         # Create radio buttons for filter options
         self.today_radio_button = QRadioButton("Today")
         self.next_days_radio_button = QRadioButton("Next Days")
@@ -264,10 +274,12 @@ class TaskListWindow(QMainWindow):
         self.filter_layout.addWidget(self.all_radio_button)  # Add new button to layout
 
     def create_main_layout(self):
+        """Create the main vertical layout for search bar, table, etc."""
         # Create a main layout for the content
         self.main_layout = QVBoxLayout()
 
     def create_search_bar(self):
+        """Set up the QLineEdit for searching tasks."""
         # Create a search bar
         self.search_bar = QLineEdit()
         self.search_bar.setPlaceholderText("Search tasks...")
@@ -306,6 +318,7 @@ class TaskListWindow(QMainWindow):
         vertical_header.setDefaultSectionSize(30)
 
     def create_horizontal_layout(self):
+        """Lay out the sidebar and the main vertical layout horizontally."""
         # Create a horizontal layout for the sidebar and main content
         horizontal_layout = QHBoxLayout()
         horizontal_layout.addWidget(self.sidebar_widget)
@@ -317,6 +330,7 @@ class TaskListWindow(QMainWindow):
         self.central_widget.setLayout(horizontal_layout)
 
     def create_vertical_layout(self):
+        """Place the motivational phrase and central content vertically."""
         # Create a new QVBoxLayout
         vertical_layout = QVBoxLayout()
         # Create the motivational_phrase_label and add it to the vertical layout
@@ -376,6 +390,7 @@ class TaskListWindow(QMainWindow):
         self.task_list_sidebar.clearSelection()
 
     def uncheck_radio_buttons(self):
+        """Uncheck any checked radio buttons in the filter group."""
         # Uncheck any checked radio button
         self.radio_button_group.setExclusive(False)
         self.today_radio_button.setChecked(False)
@@ -495,6 +510,7 @@ class TaskListWindow(QMainWindow):
         self.is_fetching_tasks = False
 
     def order_tasks_by_due_date(self, ascending):
+        """Sort tasks in the table by due date (3rd column), ascending or descending."""
         # Implement logic to order tasks by due date
         # Assuming the due date is in the 3rd column (index 2)
         # Debug: Print what ordering it is applying:
@@ -508,6 +524,7 @@ class TaskListWindow(QMainWindow):
         )
 
     def order_tasks_by_completed_date(self, ascending):
+        """Sort tasks in the table by completed date (3rd column)."""
         # Implement logic to order tasks by completed date, this replaced due date when displaying completed tasks
         # Assuming the completed date is in the 3rd column (index 2)
         # Debug: Print what ordering it is applying:
@@ -579,9 +596,11 @@ class TaskListWindow(QMainWindow):
         self.about_popup = QWidget()
         self.about_popup.setWindowTitle("About")
         self.about_popup.setGeometry(100, 100, 200, 100)
-        label = QLabel(
-            "Author: Fernando (Xbito) Gutierrez with the help of multiple AIs: Github Copilot, Llama, qwen, gpt and Gemini"
+        label_text = (
+            "Author: Fernando (Xbito) Gutierrez with multiple AIs: "
+            "Github Copilot, Llama, qwen, gpt, and Gemini"
         )
+        label = QLabel(label_text)
         self.about_popup.setLayout(QVBoxLayout())
         self.about_popup.layout().addWidget(label)
         self.about_popup.show()
@@ -824,7 +843,7 @@ class TaskListWindow(QMainWindow):
         widget.setGraphicsEffect(shadow)
 
     def apply_shadows(self):
-        """Apply shadows to all widgets that need them"""
+        """Apply drop shadows to key widgets in the UI."""
         # Apply shadows to main UI elements
         self.apply_shadow(self.filter_group_box)
         self.apply_shadow(self.search_bar)

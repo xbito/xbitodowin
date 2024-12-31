@@ -1,3 +1,8 @@
+"""
+Entry point for the Xbitodowin application.
+Launches the main TaskListWindow.
+"""
+
 import sys
 
 from PySide6.QtGui import QFont, QColor

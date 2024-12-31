@@ -11,14 +11,28 @@ import datetime
 
 
 class TaskListSidebar(QListWidget):
+    """A sidebar widget for displaying multiple Google Task lists."""
+
     def __init__(self, parent=None, window=None):
+        """
+        Initialize the TaskListSidebar.
+
+        :param parent: Optional parent widget.
+        :param window: Reference to the main application window.
+        """
         super().__init__(parent)
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.itemClicked.connect(self.load_tasks_by_task_list)
         self.window = window
 
     def fetch_tasks_by_task_list(self, item):
-        if type(item) is str:
+        """
+        Fetch tasks for the given task list item.
+
+        :param item: A QListWidgetItem containing task list info.
+        :return: List of tasks from the selected task list.
+        """
+        if isinstance(item, str):
             task_list_id = item  # Set the current task list ID
         else:
             task_list_id = item.data(Qt.UserRole)
@@ -35,6 +49,11 @@ class TaskListSidebar(QListWidget):
         return tasks
 
     def render_tasks(self, tasks):
+        """
+        Clear and reload the main task table with the given tasks.
+
+        :param tasks: List of task dictionaries to display.
+        """
         # Clear the table before loading new tasks
         self.window.task_table.setRowCount(0)
 
@@ -94,11 +113,17 @@ class TaskListSidebar(QListWidget):
             item.setData(Qt.UserRole, task["id"])
 
     def load_tasks_by_task_list(self, item):
+        """
+        Load tasks for the given item and render them.
+
+        :param item: A QListWidgetItem containing task list info.
+        """
         tasks = self.fetch_tasks_by_task_list(item)
         self.render_tasks(tasks)
         self.window.refresh_button.setEnabled(True)
 
     def refresh_tasks(self):
+        """Refresh tasks by reloading for the currently selected item."""
         current_item = self.currentItem()
         if current_item:
             self.load_tasks_by_task_list(current_item)
