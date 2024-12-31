@@ -49,9 +49,9 @@ from googleapiclient.discovery import build
 
 # Local imports
 from TaskListSidebar import TaskListSidebar
-from exports import export_tasks_to_csv, export_tasks_to_excel, export_tasks_to_gsheet
 from motivation import get_motivational_phrase
 from stylesheet import UI_STYLESHEET
+from menu import TaskListMenu
 
 SCOPES = [
     "https://www.googleapis.com/auth/tasks.readonly",
@@ -128,10 +128,9 @@ class TaskListWindow(QMainWindow):
                 token.write(self.creds.to_json())
 
     def initUI(self):
-        # Set the window title and icon
+        """Initialize the user interface components."""
         self.setWindowTitle("Xbitodowin | Google Tasks Viewer")
         self.setWindowIcon(QIcon("output.ico.32x32.png"))
-        # Initialize the main layout
         self.center_window()
         self.create_filter_group_box()
         self.create_sidebar()
@@ -140,9 +139,8 @@ class TaskListWindow(QMainWindow):
         self.create_task_table()
         self.create_horizontal_layout()
         self.create_vertical_layout()
-        self.create_menu()
+        self.menu = TaskListMenu(self)  # Replace create_menu() with this line
         self.create_refresh_button()
-        # Set a flat stylesheet for the window
         self.setStyleSheet(UI_STYLESHEET)
 
     def center_window(self) -> None:
@@ -549,34 +547,6 @@ class TaskListWindow(QMainWindow):
         # Refresh the tasks associated with this task list
         self.task_list_sidebar.load_tasks_by_task_list(task_list_id)
         self.reset_cursor()
-
-    def create_menu(self):
-        self.menu_bar = self.menuBar()
-        help_menu = self.menu_bar.addMenu("Help")
-        help_action = QAction("About", self)
-        help_action.triggered.connect(self.show_about_popup)
-        help_menu.addAction(help_action)
-
-        export_menu = self.menuBar().addMenu("Export")
-        export_csv_action = QAction("Export to CSV", self)
-        export_csv_action.triggered.connect(
-            lambda: export_tasks_to_csv(tasks=self.fetch_non_completed_tasks())
-        )
-        export_menu.addAction(export_csv_action)
-
-        export_excel_action = QAction("Export to Excel", self)
-        export_excel_action.triggered.connect(
-            lambda: export_tasks_to_excel(tasks=self.fetch_non_completed_tasks())
-        )
-        export_menu.addAction(export_excel_action)
-
-        export_gsheet_action = QAction("Export to Google Sheets", self)
-        export_gsheet_action.triggered.connect(
-            lambda: export_tasks_to_gsheet(
-                tasks=self.fetch_non_completed_tasks(), service=self.sheets_service
-            )
-        )
-        export_menu.addAction(export_gsheet_action)
 
     def create_refresh_button(self):
         self.refresh_button = QPushButton("Refresh")
