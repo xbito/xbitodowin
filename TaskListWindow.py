@@ -50,6 +50,7 @@ from TaskListSidebar import TaskListSidebar
 from motivation import get_motivational_phrase
 from stylesheet import UI_STYLESHEET
 from menu import TaskListMenu
+from youtube import get_youtube_video_info
 
 SCOPES = [
     "https://www.googleapis.com/auth/tasks.readonly",
@@ -800,6 +801,23 @@ class TaskListWindow(QMainWindow):
         details_layout.addRow("Notes:", self.detail_notes_field)
         details_layout.addRow("Link:", self.detail_web_link_button)
 
+        self.youtube_info_group_box = QGroupBox("YouTube Video")
+        box_layout = QVBoxLayout(self.youtube_info_group_box)
+        self.youtube_thumbnail_label = QLabel()
+        self.youtube_thumbnail_label.setFixedSize(160, 90)
+        box_layout.addWidget(self.youtube_thumbnail_label)
+        self.youtube_title_label = QLabel()
+        box_layout.addWidget(self.youtube_title_label)
+        self.youtube_channel_label = QLabel()
+        box_layout.addWidget(self.youtube_channel_label)
+        self.youtube_duration_label = QLabel()
+        box_layout.addWidget(self.youtube_duration_label)
+        self.youtube_open_button = QPushButton("Open Video in Browser")
+        self.youtube_open_button.setEnabled(False)
+        box_layout.addWidget(self.youtube_open_button)
+        self.youtube_info_group_box.setVisible(False)
+        details_layout.addRow(self.youtube_info_group_box)
+
         self.details_widget.setLayout(details_layout)
         self.details_widget.setVisible(False)  # Hide by default
 
@@ -848,6 +866,33 @@ class TaskListWindow(QMainWindow):
             self.detail_due_field.setText(completed_date or "")
         else:
             self.detail_due_field.setText(due_date or "")
+
+        # Check for a YouTube URL in title or notes
+        combined_text = title_item.text() + " " + (notes or "")
+        video_info = get_youtube_video_info(combined_text)
+        if video_info:
+            self.youtube_info_group_box.setVisible(True)
+            self.youtube_title_label.setText(f"Title: {video_info['title']}")
+            self.youtube_channel_label.setText(f"Channel: {video_info['channel']}")
+            self.youtube_duration_label.setText(f"Duration: {video_info['duration']}")
+
+            # Load thumbnail
+            thumb_data = requests.get(video_info["thumbnail"]).content
+            pixmap = QPixmap()
+            pixmap.loadFromData(thumb_data)
+            self.youtube_thumbnail_label.setPixmap(
+                pixmap.scaled(160, 90, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            )
+
+            # Enable button and open YouTube URL
+            self.youtube_open_button.setEnabled(True)
+            youtube_url = f"https://www.youtube.com/watch?v={video_info['video_id']}"
+            self.youtube_open_button.clicked.connect(
+                lambda: webbrowser.open(youtube_url)
+            )
+        else:
+            self.youtube_info_group_box.setVisible(False)
+            self.youtube_open_button.setEnabled(False)
 
     def clear_details_panel(self):
         """Clear all fields in the details panel."""
