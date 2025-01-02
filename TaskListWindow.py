@@ -4,6 +4,7 @@ import webbrowser
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
 from typing import Optional, List, Dict, Any
+import re
 
 # Third-party imports
 import pytz
@@ -791,15 +792,15 @@ class TaskListWindow(QMainWindow):
         self.detail_updated_field = QLineEdit()
         self.detail_due_field = QLineEdit()
         self.detail_notes_field = QTextEdit()
-        self.detail_web_link_button = QPushButton("Open Web Link")
-        self.detail_web_link_button.setEnabled(False)
-        self.detail_web_link_button.clicked.connect(self.open_web_link)
+        self.view_task_in_browser_button = QPushButton("Open Task in Browser")
+        self.view_task_in_browser_button.setEnabled(False)
+        self.view_task_in_browser_button.clicked.connect(self.open_selected_task_link)
 
         details_layout.addRow("Title:", self.detail_title_field)
         details_layout.addRow("Updated:", self.detail_updated_field)
         details_layout.addRow("Due:", self.detail_due_field)
         details_layout.addRow("Notes:", self.detail_notes_field)
-        details_layout.addRow("Link:", self.detail_web_link_button)
+        details_layout.addRow("Link:", self.view_task_in_browser_button)
 
         self.youtube_info_group_box = QGroupBox("YouTube Video")
         box_layout = QVBoxLayout(self.youtube_info_group_box)
@@ -818,13 +819,26 @@ class TaskListWindow(QMainWindow):
         self.youtube_info_group_box.setVisible(False)
         details_layout.addRow(self.youtube_info_group_box)
 
+        self.web_group_box = QGroupBox("Web Page")
+        box_layout = QVBoxLayout(self.web_group_box)
+        self.open_web_link_button = QPushButton("Open Web Page in Browser")
+        self.open_web_link_button.setEnabled(False)
+        self.open_web_link_button.setVisible(False)
+        box_layout.addWidget(self.open_web_link_button)
+        self.web_group_box.setVisible(False)
+        details_layout.addRow(self.web_group_box)
+
         self.details_widget.setLayout(details_layout)
         self.details_widget.setVisible(False)  # Hide by default
+        self.details_widget.setStyleSheet(
+            "QGroupBox { background-color: #3E3E3E; margin: 10px; padding: 10px; border: 1px solid #2E2E2E; }"
+        )
+        details_layout.setSpacing(8)
 
-    def open_web_link(self):
+    def open_selected_task_link(self):
         """Open the current web link in the default browser."""
-        if hasattr(self, "current_web_link") and self.current_web_link:
-            QDesktopServices.openUrl(QUrl(self.current_web_link))
+        if hasattr(self, "selected_task_link") and self.selected_task_link:
+            QDesktopServices.openUrl(QUrl(self.selected_task_link))
 
     def update_details_panel(self):
         """
@@ -858,8 +872,8 @@ class TaskListWindow(QMainWindow):
         self.detail_notes_field.setPlainText(notes or "")
 
         # Store the link and enable the button
-        self.current_web_link = web_link or ""
-        self.detail_web_link_button.setEnabled(bool(self.current_web_link))
+        self.selected_task_link = web_link or ""
+        self.view_task_in_browser_button.setEnabled(bool(self.selected_task_link))
 
         # Show due date or completion date based on status
         if status == "completed":
@@ -887,6 +901,10 @@ class TaskListWindow(QMainWindow):
             # Enable button and open YouTube URL
             self.youtube_open_button.setEnabled(True)
             youtube_url = f"https://www.youtube.com/watch?v={video_info['video_id']}"
+            try:
+                self.youtube_open_button.clicked.disconnect()
+            except RuntimeError:
+                pass
             self.youtube_open_button.clicked.connect(
                 lambda: webbrowser.open(youtube_url)
             )
@@ -894,11 +912,33 @@ class TaskListWindow(QMainWindow):
             self.youtube_info_group_box.setVisible(False)
             self.youtube_open_button.setEnabled(False)
 
+        # Check for a non-YouTube URL in title or notes
+        match = re.search(r"https?://[^\s]+", combined_text)
+        if (
+            match
+            and "youtube.com" not in match.group(0)
+            and "youtu.be" not in match.group(0)
+        ):
+            self.web_group_box.setVisible(True)
+            self.open_web_link_button.setVisible(True)
+            self.open_web_link_button.setEnabled(True)
+            try:
+                self.open_web_link_button.clicked.disconnect()
+            except RuntimeError:
+                pass
+            self.open_web_link_button.clicked.connect(
+                lambda: webbrowser.open(match.group(0))
+            )
+        else:
+            self.web_group_box.setVisible(False)
+            self.open_web_link_button.setVisible(False)
+            self.open_web_link_button.setEnabled(False)
+
     def clear_details_panel(self):
         """Clear all fields in the details panel."""
         self.detail_title_field.clear()
         self.detail_due_field.clear()
         self.detail_updated_field.clear()
         self.detail_notes_field.clear()
-        self.detail_web_link_button.setEnabled(False)
-        self.current_web_link = ""
+        self.view_task_in_browser_button.setEnabled(False)
+        self.selected_task_link = ""
