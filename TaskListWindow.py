@@ -52,6 +52,7 @@ from motivation import get_motivational_phrase
 from stylesheet import UI_STYLESHEET
 from menu import TaskListMenu
 from youtube import get_youtube_video_info
+from task_details_panel import TaskDetailsPanel
 
 SCOPES = [
     "https://www.googleapis.com/auth/tasks.readonly",
@@ -295,8 +296,6 @@ class TaskListWindow(QMainWindow):
         self.task_table.setHorizontalHeaderLabels(headers)
         self.task_table.setAlternatingRowColors(True)
         self._configure_table_headers()
-        # Connect selection change to update details panel
-        self.task_table.itemSelectionChanged.connect(self.update_details_panel)
         self.main_layout.addWidget(self.task_table)
 
     def _configure_table_headers(self) -> None:
@@ -316,8 +315,8 @@ class TaskListWindow(QMainWindow):
         horizontal_layout.addLayout(self.main_layout)
 
         # Create the details panel and add it to the layout
-        self.create_details_panel()
-        horizontal_layout.addWidget(self.details_widget)
+        self.details_panel = TaskDetailsPanel(table=self.task_table)
+        horizontal_layout.addWidget(self.details_panel)
 
         # Create a central widget and set the main layout
         # Set the horizontal layout as the central widget
@@ -718,6 +717,10 @@ class TaskListWindow(QMainWindow):
 
     def start(self):
         self.load_task_lists()
+        # Connect selection change to update details panel
+        self.task_table.itemSelectionChanged.connect(
+            self.details_panel.update_details_panel
+        )
 
     def handle_title_click(self, row, column):
         if column == 0:
@@ -781,164 +784,3 @@ class TaskListWindow(QMainWindow):
         # Reduce shadow size for smaller elements
         self.apply_shadow(self.refresh_button, radius=4, offset=1)
         self.apply_shadow(self.refresh_button, radius=4, offset=1)
-
-    def create_details_panel(self):
-        """Create a panel on the right to display task details in editable fields."""
-        self.details_widget = QGroupBox("Task Details")
-        self.details_widget.setFixedWidth(500)
-        details_layout = QFormLayout()
-
-        self.detail_title_field = QLineEdit()
-        self.detail_updated_field = QLineEdit()
-        self.detail_due_field = QLineEdit()
-        self.detail_notes_field = QTextEdit()
-        self.view_task_in_browser_button = QPushButton("Open Task in Browser")
-        self.view_task_in_browser_button.setEnabled(False)
-        self.view_task_in_browser_button.clicked.connect(self.open_selected_task_link)
-
-        details_layout.addRow("Title:", self.detail_title_field)
-        details_layout.addRow("Updated:", self.detail_updated_field)
-        details_layout.addRow("Due:", self.detail_due_field)
-        details_layout.addRow("Notes:", self.detail_notes_field)
-        details_layout.addRow("Link:", self.view_task_in_browser_button)
-
-        self.youtube_info_group_box = QGroupBox("YouTube Video")
-        box_layout = QVBoxLayout(self.youtube_info_group_box)
-        self.youtube_thumbnail_label = QLabel()
-        self.youtube_thumbnail_label.setFixedSize(160, 90)
-        box_layout.addWidget(self.youtube_thumbnail_label)
-        self.youtube_title_label = QLabel()
-        box_layout.addWidget(self.youtube_title_label)
-        self.youtube_channel_label = QLabel()
-        box_layout.addWidget(self.youtube_channel_label)
-        self.youtube_duration_label = QLabel()
-        box_layout.addWidget(self.youtube_duration_label)
-        self.youtube_open_button = QPushButton("Open Video in Browser")
-        self.youtube_open_button.setEnabled(False)
-        box_layout.addWidget(self.youtube_open_button)
-        self.youtube_info_group_box.setVisible(False)
-        details_layout.addRow(self.youtube_info_group_box)
-
-        self.web_group_box = QGroupBox("Web Page")
-        box_layout = QVBoxLayout(self.web_group_box)
-        self.open_web_link_button = QPushButton("Open Web Page in Browser")
-        self.open_web_link_button.setEnabled(False)
-        self.open_web_link_button.setVisible(False)
-        box_layout.addWidget(self.open_web_link_button)
-        self.web_group_box.setVisible(False)
-        details_layout.addRow(self.web_group_box)
-
-        self.details_widget.setLayout(details_layout)
-        self.details_widget.setVisible(False)  # Hide by default
-        self.details_widget.setStyleSheet(
-            "QGroupBox { background-color: #3E3E3E; margin: 10px; padding: 10px; border: 1px solid #2E2E2E; }"
-        )
-        details_layout.setSpacing(8)
-
-    def open_selected_task_link(self):
-        """Open the current web link in the default browser."""
-        if hasattr(self, "selected_task_link") and self.selected_task_link:
-            QDesktopServices.openUrl(QUrl(self.selected_task_link))
-
-    def update_details_panel(self):
-        """
-        Populate the details panel with data from the selected row.
-        If nothing is selected, clear the panel and hide the panel.
-        """
-        selected_items = self.task_table.selectedItems()
-        if not selected_items:
-            self.clear_details_panel()
-            self.details_widget.hide()  # Hide when no task is selected
-            return
-
-        self.details_widget.show()  # Show when a task is selected
-
-        row = selected_items[0].row()
-        title_item = self.task_table.item(row, 0)
-        if not title_item:
-            return
-
-        # Get all stored data from user roles
-        self.detail_title_field.setText(title_item.text())
-        updated = title_item.data(Qt.UserRole + 2)
-        notes = title_item.data(Qt.UserRole + 3)
-        web_link = title_item.data(Qt.UserRole + 4)
-        due_date = title_item.data(Qt.UserRole + 5)
-        completed_date = title_item.data(Qt.UserRole + 6)
-        status = title_item.data(Qt.UserRole + 7)
-
-        # Update the fields
-        self.detail_updated_field.setText(updated)
-        self.detail_notes_field.setPlainText(notes or "")
-
-        # Store the link and enable the button
-        self.selected_task_link = web_link or ""
-        self.view_task_in_browser_button.setEnabled(bool(self.selected_task_link))
-
-        # Show due date or completion date based on status
-        if status == "completed":
-            self.detail_due_field.setText(completed_date or "")
-        else:
-            self.detail_due_field.setText(due_date or "")
-
-        # Check for a YouTube URL in title or notes
-        combined_text = title_item.text() + " " + (notes or "")
-        video_info = get_youtube_video_info(combined_text)
-        if video_info:
-            self.youtube_info_group_box.setVisible(True)
-            self.youtube_title_label.setText(f"Title: {video_info['title']}")
-            self.youtube_channel_label.setText(f"Channel: {video_info['channel']}")
-            self.youtube_duration_label.setText(f"Duration: {video_info['duration']}")
-
-            # Load thumbnail
-            thumb_data = requests.get(video_info["thumbnail"]).content
-            pixmap = QPixmap()
-            pixmap.loadFromData(thumb_data)
-            self.youtube_thumbnail_label.setPixmap(
-                pixmap.scaled(160, 90, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-            )
-
-            # Enable button and open YouTube URL
-            self.youtube_open_button.setEnabled(True)
-            youtube_url = f"https://www.youtube.com/watch?v={video_info['video_id']}"
-            try:
-                self.youtube_open_button.clicked.disconnect()
-            except RuntimeError:
-                pass
-            self.youtube_open_button.clicked.connect(
-                lambda: webbrowser.open(youtube_url)
-            )
-        else:
-            self.youtube_info_group_box.setVisible(False)
-            self.youtube_open_button.setEnabled(False)
-
-        # Check for a non-YouTube URL in title or notes
-        match = re.search(r"https?://[^\s]+", combined_text)
-        if (
-            match
-            and "youtube.com" not in match.group(0)
-            and "youtu.be" not in match.group(0)
-        ):
-            self.web_group_box.setVisible(True)
-            self.open_web_link_button.setVisible(True)
-            self.open_web_link_button.setEnabled(True)
-            try:
-                self.open_web_link_button.clicked.disconnect()
-            except RuntimeError:
-                pass
-            self.open_web_link_button.clicked.connect(
-                lambda: webbrowser.open(match.group(0))
-            )
-        else:
-            self.web_group_box.setVisible(False)
-            self.open_web_link_button.setVisible(False)
-            self.open_web_link_button.setEnabled(False)
-
-    def clear_details_panel(self):
-        """Clear all fields in the details panel."""
-        self.detail_title_field.clear()
-        self.detail_due_field.clear()
-        self.detail_updated_field.clear()
-        self.detail_notes_field.clear()
-        self.view_task_in_browser_button.setEnabled(False)
-        self.selected_task_link = ""
