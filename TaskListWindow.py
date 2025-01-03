@@ -4,12 +4,11 @@ import webbrowser
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
 from typing import Optional, List, Dict, Any
-import re
 
 # Third-party imports
 import pytz
 import requests
-from PySide6.QtCore import Qt, QUrl
+from PySide6.QtCore import Qt
 from PySide6.QtGui import (
     QGuiApplication,
     QIcon,
@@ -17,7 +16,6 @@ from PySide6.QtGui import (
     QPainter,
     QBrush,
     QColor,
-    QDesktopServices,
 )
 from PySide6.QtWidgets import (
     QApplication,
@@ -27,7 +25,6 @@ from PySide6.QtWidgets import (
     QListWidgetItem,
     QMainWindow,
     QTableWidget,
-    QTextBrowser,
     QVBoxLayout,
     QWidget,
     QGroupBox,
@@ -37,8 +34,6 @@ from PySide6.QtWidgets import (
     QSizePolicy,
     QHeaderView,
     QGraphicsDropShadowEffect,
-    QFormLayout,
-    QTextEdit,
 )
 from google.auth.exceptions import RefreshError
 from google.auth.transport.requests import Request
@@ -47,7 +42,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
 # Local imports
-from TaskListSidebar import TaskListSidebar
+from task_list_sidebar import TaskListSidebar
 from motivation import get_motivational_phrase
 from stylesheet import UI_STYLESHEET
 from menu import TaskListMenu
