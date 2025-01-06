@@ -238,7 +238,7 @@ class TaskListWindow(QMainWindow):
         """Create and connect radio buttons for different filtering modes."""
         # Create radio buttons for filter options
         self.today_radio_button = QRadioButton("Today")
-        self.next_days_radio_button = QRadioButton("Next Days")
+        self.next_days_radio_button = QRadioButton("Next 7 Days")
         self.overdue_radio_button = QRadioButton("Overdue")
         self.recently_completed_radio_button = QRadioButton("Recently completed")
         self.all_radio_button = QRadioButton("All")  # Add new radio button
@@ -450,12 +450,14 @@ class TaskListWindow(QMainWindow):
                 == current_date
             ]
         elif self.next_days_radio_button.isChecked():
+            seven_days_from_now = current_date + timedelta(days=7)
             filtered_tasks = [
                 task
                 for task in all_tasks
                 if "due" in task
-                and datetime.strptime(task["due"], "%Y-%m-%dT%H:%M:%S.%fZ").date()
-                > current_date
+                and current_date
+                <= datetime.strptime(task["due"], "%Y-%m-%dT%H:%M:%S.%fZ").date()
+                <= seven_days_from_now
             ]
         elif self.overdue_radio_button.isChecked():
             filtered_tasks = [
@@ -478,51 +480,54 @@ class TaskListWindow(QMainWindow):
             self.is_fetching_tasks = False
             return
 
-        self.task_list_sidebar.render_tasks(filtered_tasks)
-
         # Get the selected radio button
         selected_button = self.radio_button_group.checkedButton()
 
         if selected_button == self.next_days_radio_button:
-            # Order by due date with the closest day to today first
-            self.order_tasks_by_due_date(ascending=True)
+            filtered_tasks = self.order_tasks_by_due_date(
+                filtered_tasks, ascending=True
+            )
         elif selected_button == self.overdue_radio_button:
-            # Order by due date, with the oldest day first
-            self.order_tasks_by_due_date(ascending=False)
+            filtered_tasks = self.order_tasks_by_due_date(
+                filtered_tasks, ascending=False
+            )
         elif selected_button == self.recently_completed_radio_button:
-            # Order by Completed, most recently completed first and going to the past
-            self.order_tasks_by_completed_date(ascending=False)
+            filtered_tasks = self.order_tasks_by_completed_date(
+                filtered_tasks, ascending=False
+            )
+
+        self.task_list_sidebar.render_tasks(filtered_tasks)
 
         self.reset_cursor()
         self.is_fetching_tasks = False
 
-    def order_tasks_by_due_date(self, ascending):
-        """Sort tasks in the table by due date (3rd column), ascending or descending."""
-        # Implement logic to order tasks by due date
-        # Assuming the due date is in the 3rd column (index 2)
-        # Debug: Print what ordering it is applying:
-        print(
-            "Ordering by due date {0}".format(
-                "ascending" if ascending else "descending"
-            )
+    def order_tasks_by_due_date(self, tasks, ascending):
+        """
+        Sorts the given tasks by their 'due' field, returning the ordered list.
+        Tasks with no due date are placed at the end.
+        """
+        tasks_with_due = [t for t in tasks if "due" in t and t["due"]]
+        tasks_without_due = [t for t in tasks if not ("due" in t and t["due"])]
+        tasks_with_due.sort(
+            key=lambda t: datetime.strptime(t["due"], "%Y-%m-%dT%H:%M:%S.%fZ"),
+            reverse=not ascending,
         )
-        self.task_table.sortItems(
-            2, Qt.AscendingOrder if ascending else Qt.DescendingOrder
-        )
+        return tasks_with_due + tasks_without_due
 
-    def order_tasks_by_completed_date(self, ascending):
-        """Sort tasks in the table by completed date (3rd column)."""
-        # Implement logic to order tasks by completed date, this replaced due date when displaying completed tasks
-        # Assuming the completed date is in the 3rd column (index 2)
-        # Debug: Print what ordering it is applying:
-        print(
-            "Ordering by completed date {0}".format(
-                "ascending" if ascending else "descending"
-            )
+    def order_tasks_by_completed_date(self, tasks, ascending):
+        """
+        Sorts the given tasks by their completion date (in 'completed'),
+        returning the ordered list. Tasks with no completed date are last.
+        """
+        tasks_with_completed = [t for t in tasks if "completed" in t and t["completed"]]
+        tasks_without_completed = [
+            t for t in tasks if not ("completed" in t and t["completed"])
+        ]
+        tasks_with_completed.sort(
+            key=lambda t: datetime.strptime(t["completed"], "%Y-%m-%dT%H:%M:%S.%fZ"),
+            reverse=not ascending,
         )
-        self.task_table.sortItems(
-            2, Qt.AscendingOrder if ascending else Qt.DescendingOrder
-        )
+        return tasks_with_completed + tasks_without_completed
 
     def refresh_tasks(self, current_item: Optional[QListWidgetItem] = None) -> None:
         """
