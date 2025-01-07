@@ -2,6 +2,7 @@ import csv
 import datetime
 
 from PySide6.QtWidgets import QMessageBox, QApplication
+from PySide6.QtCore import Qt
 from openpyxl import Workbook
 
 HEADER = [
@@ -12,11 +13,13 @@ HEADER = [
     "Updated",
     "Due",
     "Status",
+    "Notes",
     "Web Link",
 ]
 
 
 def export_tasks_to_excel(tasks, filename="tasks.xlsx"):
+    QApplication.setOverrideCursor(Qt.WaitCursor)
     wb = Workbook()
     ws = wb.active
     # Add a header row
@@ -33,16 +36,19 @@ def export_tasks_to_excel(tasks, filename="tasks.xlsx"):
                 task["updated"],
                 task["due"],
                 task["status"],
+                task["notes"],
                 task["webViewLink"],
             ]
         )
         sequence_number += 1
     wb.save(filename)
+    QApplication.restoreOverrideCursor()
     print(f"Tasks exported to {filename}")
     show_file_location_dialog(filename)
 
 
 def export_tasks_to_csv(tasks, filename="tasks.csv"):
+    QApplication.setOverrideCursor(Qt.WaitCursor)
     with open(filename, mode="w", newline="", encoding="utf-8") as file:
         fieldnames = [
             "number",
@@ -52,6 +58,7 @@ def export_tasks_to_csv(tasks, filename="tasks.csv"):
             "updated",
             "due",
             "status",
+            "notes",
             "webViewLink",
         ]
         writer = csv.DictWriter(file, fieldnames=fieldnames, extrasaction="ignore")
@@ -64,11 +71,13 @@ def export_tasks_to_csv(tasks, filename="tasks.csv"):
         for task in tasks:
             writer.writerow({**{"number": sequence_number}, **task})
             sequence_number += 1
+    QApplication.restoreOverrideCursor()
     print(f"Tasks exported to {filename}")
     show_file_location_dialog(filename)
 
 
 def export_tasks_to_gsheet(tasks, service):
+    QApplication.setOverrideCursor(Qt.WaitCursor)
     # Create a new Google Spreadsheet with a name based on the current timestamp
     spreadsheet = {
         "properties": {
@@ -94,6 +103,7 @@ def export_tasks_to_gsheet(tasks, service):
                 task["updated"],
                 task["due"],
                 task["status"],
+                task["notes"],
                 task["webViewLink"],
             ]
         )
@@ -106,12 +116,13 @@ def export_tasks_to_gsheet(tasks, service):
         .values()
         .update(
             spreadsheetId=spreadsheet["spreadsheetId"],
-            range="A1:H" + str(len(data)),
+            range="A1:I" + str(len(data)),  # Updated here
             valueInputOption="RAW",
             body=body,
         )
         .execute()
     )
+    QApplication.restoreOverrideCursor()
 
 
 def show_file_location_dialog(file_path):
