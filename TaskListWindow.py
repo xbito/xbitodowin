@@ -46,7 +46,6 @@ from task_list_sidebar import TaskListSidebar
 from motivation import get_motivational_phrase
 from stylesheet import UI_STYLESHEET
 from menu import TaskListMenu
-from youtube import get_youtube_video_info
 from task_details_panel import TaskDetailsPanel
 
 SCOPES = [
