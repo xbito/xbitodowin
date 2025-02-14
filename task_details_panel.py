@@ -11,6 +11,8 @@ from PySide6.QtWidgets import (
     QPushButton,
     QVBoxLayout,
     QLabel,
+    QMessageBox,
+    QHBoxLayout,
 )
 from youtube import get_youtube_video_info
 
@@ -44,12 +46,31 @@ class TaskDetailsPanel(QGroupBox):
         self.view_task_in_browser_button = QPushButton("Open Task in Browser")
         self.view_task_in_browser_button.setEnabled(False)
         self.view_task_in_browser_button.clicked.connect(self.open_selected_task_link)
+        
+        # Create action buttons layout
+        action_buttons_layout = QHBoxLayout()
+        
+        # Add Mark as Complete button
+        self.complete_task_button = QPushButton("Mark as Complete")
+        self.complete_task_button.setEnabled(False)
+        self.complete_task_button.clicked.connect(self.mark_task_complete)
+        
+        # Add Delete Task button
+        self.delete_task_button = QPushButton("Delete Task")
+        self.delete_task_button.setEnabled(False)
+        self.delete_task_button.setStyleSheet("background-color: #8B0000; color: white;")
+        self.delete_task_button.clicked.connect(self.delete_task)
+        
+        # Add buttons to action layout
+        action_buttons_layout.addWidget(self.complete_task_button)
+        action_buttons_layout.addWidget(self.delete_task_button)
 
         layout.addRow("Title:", self.detail_title_field)
         layout.addRow("Updated:", self.detail_updated_field)
         layout.addRow("Due:", self.detail_due_field)
         layout.addRow("Notes:", self.detail_notes_field)
         layout.addRow("Link:", self.view_task_in_browser_button)
+        layout.addRow(action_buttons_layout)  # Add the action buttons layout
 
         self.youtube_info_group_box = QGroupBox("YouTube Video")
         youtube_layout = QVBoxLayout(self.youtube_info_group_box)
@@ -100,6 +121,9 @@ class TaskDetailsPanel(QGroupBox):
         if not title_item:
             return
 
+        # Get task data from item
+        self.current_task_id = title_item.data(Qt.UserRole)  # Store task ID
+        self.current_task_list_id = title_item.data(Qt.UserRole + 1)  # Store task list ID
         updated = title_item.data(Qt.UserRole + 2)
         notes = title_item.data(Qt.UserRole + 3)
         web_link = title_item.data(Qt.UserRole + 4)
@@ -112,6 +136,10 @@ class TaskDetailsPanel(QGroupBox):
         self.detail_notes_field.setPlainText(notes or "")
         self.selected_task_link = web_link or ""
         self.view_task_in_browser_button.setEnabled(bool(self.selected_task_link))
+        
+        # Enable/disable action buttons based on status
+        self.complete_task_button.setEnabled(status != "completed")
+        self.delete_task_button.setEnabled(True)  # Always enable delete button
 
         if status == "completed":
             self.detail_due_field.setText(completed_date or "")
@@ -174,6 +202,88 @@ class TaskDetailsPanel(QGroupBox):
         if hasattr(self, "selected_task_link") and self.selected_task_link:
             QDesktopServices.openUrl(QUrl(self.selected_task_link))
 
+    def mark_task_complete(self):
+        """Mark the current task as complete and refresh the view."""
+        if not hasattr(self, 'current_task_id') or not hasattr(self, 'current_task_list_id'):
+            return
+
+        try:
+            # Get parent window reference
+            parent_window = self.window()
+            
+            # Get current task
+            task = parent_window.tasks_service.tasks().get(
+                tasklist=self.current_task_list_id,
+                task=self.current_task_id
+            ).execute()
+            
+            # Update task status to completed
+            task['status'] = 'completed'
+            parent_window.tasks_service.tasks().update(
+                tasklist=self.current_task_list_id,
+                task=self.current_task_id,
+                body=task
+            ).execute()
+            
+            # Disable the complete button
+            self.complete_task_button.setEnabled(False)
+            
+            # Refresh the task list
+            parent_window.refresh_tasks()
+            
+        except Exception as e:
+            print(f"Error marking task as complete: {e}")
+
+    def delete_task(self):
+        """Delete the current task after confirmation."""
+        if not hasattr(self, 'current_task_id') or not hasattr(self, 'current_task_list_id'):
+            print("Missing task ID or task list ID")
+            return
+
+        print(f"Task ID: {self.current_task_id}")
+        print(f"Task List ID: {self.current_task_list_id}")
+
+        # Show confirmation dialog
+        confirm = QMessageBox()
+        confirm.setWindowTitle("Delete Task")
+        confirm.setText("Are you sure you want to delete this task?")
+        confirm.setIcon(QMessageBox.Warning)
+        confirm.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        confirm.setDefaultButton(QMessageBox.No)
+        
+        if confirm.exec() == QMessageBox.Yes:
+            try:
+                # Get parent window reference
+                parent_window = self.window()
+                
+                # Delete the task
+                parent_window.tasks_service.tasks().delete(
+                    tasklist=self.current_task_list_id,
+                    task=self.current_task_id
+                ).execute()
+                
+                # Show success message
+                success = QMessageBox()
+                success.setWindowTitle("Success")
+                success.setText("Task deleted successfully!")
+                success.setIcon(QMessageBox.Information)
+                success.exec()
+                
+                # Refresh the task list
+                parent_window.refresh_tasks()
+                
+                # Clear and hide the details panel
+                self.clear_details_panel()
+                self.setVisible(False)
+                
+            except Exception as e:
+                # Show error message with detailed error info
+                error = QMessageBox()
+                error.setWindowTitle("Error")
+                error.setText(f"Error deleting task:\n{str(e)}\nTask ID: {self.current_task_id}\nList ID: {self.current_task_list_id}")
+                error.setIcon(QMessageBox.Critical)
+                error.exec()
+
     def clear_details_panel(self):
         """Clear all detail fields and disable relevant buttons."""
         self.detail_title_field.clear()
@@ -181,4 +291,6 @@ class TaskDetailsPanel(QGroupBox):
         self.detail_updated_field.clear()
         self.detail_notes_field.clear()
         self.view_task_in_browser_button.setEnabled(False)
+        self.complete_task_button.setEnabled(False)
+        self.delete_task_button.setEnabled(False)
         self.selected_task_link = ""

@@ -37,11 +37,15 @@ class TaskListSidebar(QListWidget):
 
         # Fetch tasks for the selected task list
         tasks_response = (
-            self.window.service.tasks()
+            self.window.tasks_service.tasks()
             .list(tasklist=task_list_id, maxResults=1000)
             .execute()
         )
         tasks = tasks_response.get("items", [])
+        # Add task list ID to each task
+        for task in tasks:
+            task["task_list_id"] = task_list_id
+            
         return tasks
 
     def render_tasks(self, tasks):

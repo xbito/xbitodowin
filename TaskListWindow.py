@@ -49,7 +49,7 @@ from menu import TaskListMenu
 from task_details_panel import TaskDetailsPanel
 
 SCOPES = [
-    "https://www.googleapis.com/auth/tasks.readonly",
+    "https://www.googleapis.com/auth/tasks", 
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/userinfo.email",
     "https://www.googleapis.com/auth/userinfo.profile",
@@ -95,7 +95,7 @@ class TaskListWindow(QMainWindow):
             with open("credentials/token.json", "w") as token:
                 token.write(self.creds.to_json())
 
-        self.service = build("tasks", "v1", credentials=self.creds)
+        self.tasks_service = build("tasks", "v1", credentials=self.creds)
         # Load Google Sheets API
         self.sheets_service = build("sheets", "v4", credentials=self.creds)
         # Load User Profile API
@@ -566,14 +566,14 @@ class TaskListWindow(QMainWindow):
             try:
                 # Attempt to fetch the task lists from the API
                 tasklists_response = (
-                    self.service.tasklists().list(pageToken=page_token).execute()
+                    self.tasks_service.tasklists().list(pageToken=page_token).execute()
                 )
             except RefreshError as e:
                 # If the token has expired, refresh it and retry the request
                 print("Token has expired: {}".format(e))
                 self.refresh_token()
                 tasklists_response = (
-                    self.service.tasklists().list(pageToken=page_token).execute()
+                    self.tasks_service.tasklists().list(pageToken=page_token).execute()
                 )
 
             # Extract the list of task lists from the response
@@ -601,7 +601,7 @@ class TaskListWindow(QMainWindow):
         """
         print("Fetching non-completed tasks...")
         all_tasks = []
-        task_lists = self.service.tasklists().list().execute().get("items", [])
+        task_lists = self.tasks_service.tasklists().list().execute().get("items", [])
 
         def fetch_non_completed_tasks_for_list(task_list):
             tasks = []
@@ -609,7 +609,7 @@ class TaskListWindow(QMainWindow):
             while True:
                 try:
                     response = (
-                        self.service.tasks()
+                        self.tasks_service.tasks()
                         .list(tasklist=task_list["id"], pageToken=page_token)
                         .execute()
                     )
@@ -665,7 +665,7 @@ class TaskListWindow(QMainWindow):
         """
         print("Fetching all tasks...")
         all_tasks = []
-        task_lists = self.service.tasklists().list().execute().get("items", [])
+        task_lists = self.tasks_service.tasklists().list().execute().get("items", [])
 
         def fetch_tasks_for_list(task_list):
             tasks = []
@@ -676,7 +676,7 @@ class TaskListWindow(QMainWindow):
                         one_week_ago = datetime.now() - timedelta(days=7)
                         one_week_ago_rfc3339 = one_week_ago.isoformat() + "Z"
                         response = (
-                            self.service.tasks()
+                            self.tasks_service.tasks()
                             .list(
                                 tasklist=task_list["id"],
                                 showHidden=True,
@@ -687,11 +687,15 @@ class TaskListWindow(QMainWindow):
                         )
                     else:
                         response = (
-                            self.service.tasks()
+                            self.tasks_service.tasks()
                             .list(tasklist=task_list["id"], pageToken=page_token)
                             .execute()
                         )
-                    tasks.extend(response.get("items", []))
+                    # Enrich tasks with task list information
+                    for task in response.get("items", []):
+                        task["task_list_id"] = task_list["id"]  # Add task list ID
+                        task["tasklist_name"] = task_list["title"]  # Add task list name
+                        tasks.append(task)
                     page_token = response.get("nextPageToken")
                     if not page_token:
                         break
@@ -729,7 +733,7 @@ class TaskListWindow(QMainWindow):
                 task_id = item.data(Qt.UserRole)
                 # Use the task ID to fetch the task details
                 task_details = (
-                    self.service.tasks()
+                    self.tasks_service.tasks()
                     .get(
                         tasklist=self.task_list_sidebar.current_tasklist_id,
                         task=task_id,
