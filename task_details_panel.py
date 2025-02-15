@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QMessageBox,
     QHBoxLayout,
+    QComboBox,
 )
 from youtube import get_youtube_video_info
 
@@ -61,6 +62,18 @@ class TaskDetailsPanel(QGroupBox):
         self.delete_task_button.setStyleSheet("background-color: #8B0000; color: white;")
         self.delete_task_button.clicked.connect(self.delete_task)
         
+        # Add Move Task dropdown and button
+        move_task_layout = QHBoxLayout()
+        self.task_lists_combo = QComboBox()
+        self.task_lists_combo.setEnabled(False)
+        self.task_lists_combo.setMinimumWidth(300)  # Make combo box wider
+        self.move_task_button = QPushButton("Move")  # Shorter button text
+        self.move_task_button.setEnabled(False)
+        self.move_task_button.setFixedWidth(70)  # Fixed narrow width for button
+        self.move_task_button.clicked.connect(self.move_task)
+        move_task_layout.addWidget(self.task_lists_combo)
+        move_task_layout.addWidget(self.move_task_button)
+        
         # Add buttons to action layout
         action_buttons_layout.addWidget(self.complete_task_button)
         action_buttons_layout.addWidget(self.delete_task_button)
@@ -71,6 +84,7 @@ class TaskDetailsPanel(QGroupBox):
         layout.addRow("Notes:", self.detail_notes_field)
         layout.addRow("Link:", self.view_task_in_browser_button)
         layout.addRow(action_buttons_layout)  # Add the action buttons layout
+        layout.addRow("Move to:", move_task_layout)  # Add move task controls
 
         self.youtube_info_group_box = QGroupBox("YouTube Video")
         youtube_layout = QVBoxLayout(self.youtube_info_group_box)
@@ -165,6 +179,13 @@ class TaskDetailsPanel(QGroupBox):
             self.web_group_box.setVisible(False)
             self.open_web_link_button.setVisible(False)
             self.open_web_link_button.setEnabled(False)
+
+        # Enable the move controls
+        self.task_lists_combo.setEnabled(True)
+        self.move_task_button.setEnabled(True)
+
+        # Update task lists combo box
+        self.update_task_lists_combo()
 
     def _show_youtube_info(self, info):
         """Display YouTube thumbnail and metadata."""
@@ -284,6 +305,71 @@ class TaskDetailsPanel(QGroupBox):
                 error.setIcon(QMessageBox.Critical)
                 error.exec()
 
+    def update_task_lists_combo(self):
+        """Update the task lists combo box with available lists."""
+        try:
+            parent_window = self.window()
+            self.task_lists_combo.clear()
+            
+            # Get all task lists
+            task_lists = parent_window.tasks_service.tasklists().list().execute().get("items", [])
+            
+            # Store task list data and populate combo box
+            self.task_lists_data = {}
+            for task_list in task_lists:
+                # Skip the current task list
+                if task_list["id"] != self.current_task_list_id:
+                    self.task_lists_data[task_list["title"]] = task_list["id"]
+                    self.task_lists_combo.addItem(task_list["title"])
+            
+        except Exception as e:
+            print(f"Error updating task lists: {e}")
+
+    def move_task(self):
+        """Move the current task to the selected task list."""
+        if not self.current_task_id or not self.current_task_list_id:
+            return
+
+        selected_list_title = self.task_lists_combo.currentText()
+        if not selected_list_title:
+            return
+
+        target_list_id = self.task_lists_data.get(selected_list_title)
+        if not target_list_id:
+            return
+
+        try:
+            parent_window = self.window()
+            #query_params = {'destinationTasklist': target_list_id}
+            # Move the task using the official move API
+            parent_window.tasks_service.tasks().move(
+                tasklist=self.current_task_list_id,
+                task=self.current_task_id,
+                destinationTasklist=target_list_id,
+            ).execute()
+            
+            # Show success message
+            success = QMessageBox()
+            success.setWindowTitle("Success")
+            success.setText(f"Task moved to '{selected_list_title}' successfully!")
+            success.setIcon(QMessageBox.Information)
+            success.exec()
+            
+            # Refresh the task list
+            parent_window.refresh_tasks()
+            
+            # Clear and hide the details panel
+            self.clear_details_panel()
+            self.setVisible(False)
+            
+        except Exception as e:
+            # Show error message
+            error = QMessageBox()
+            error.setWindowTitle("Error")
+            error.setText(f"Error moving task:\n{str(e)}")
+            error.setIcon(QMessageBox.Critical)
+            error.exec()
+
     def clear_details_panel(self):
         """Clear all detail fields and disable relevant buttons."""
         self.detail_title_field.clear()
@@ -293,4 +379,7 @@ class TaskDetailsPanel(QGroupBox):
         self.view_task_in_browser_button.setEnabled(False)
         self.complete_task_button.setEnabled(False)
         self.delete_task_button.setEnabled(False)
+        self.task_lists_combo.clear()
+        self.task_lists_combo.setEnabled(False)
+        self.move_task_button.setEnabled(False)
         self.selected_task_link = ""
